@@ -1,0 +1,213 @@
+/* ============================================================
+   tracker.css — Kanban board, cards, drag-drop, ATS badges
+   ============================================================ */
+
+.tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.tracker-header h1 { margin: 0; font-size: 1.8rem; }
+
+/* Kanban board override for tracker */
+.kanban {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(200px, 1fr));
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+}
+@media (max-width: 1100px) {
+    .kanban { grid-template-columns: repeat(3, minmax(200px, 1fr)); }
+}
+@media (max-width: 700px) {
+    .kanban { grid-template-columns: 1fr; }
+}
+
+.kanban-col {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    min-height: 300px;
+    transition: border-color 0.2s, background 0.2s;
+}
+.kanban-col.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.kanban-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.kanban-col-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+.col-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+}
+.col-saved    .col-dot { background: #8b5cf6; }
+.col-applied  .col-dot { background: #06b6d4; }
+.col-interview .col-dot { background: #f59e0b; }
+.col-offer    .col-dot { background: #10b981; }
+.col-rejected .col-dot { background: #ef4444; }
+
+.col-count {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.1);
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    min-width: 22px;
+    text-align: center;
+}
+
+/* Cards */
+.kanban-card {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 0.6rem;
+    cursor: grab;
+    position: relative;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    user-select: none;
+}
+.kanban-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.kanban-card:active { cursor: grabbing; }
+.kanban-card.dragging {
+    opacity: 0.5;
+    transform: scale(0.97);
+}
+
+.card-company {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.2rem;
+}
+.card-role {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+.card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+.card-score {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+.ats-good  { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+.ats-ok    { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+.ats-low   { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+
+.card-date {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+.card-notes {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Delete button on card */
+.card-delete-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0.2rem 0.35rem;
+    border-radius: 4px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+}
+.kanban-card:hover .card-delete-btn { opacity: 1; }
+.card-delete-btn:hover {
+    background: rgba(239,68,68,0.2);
+    color: #fca5a5;
+}
+
+/* ATS keyword tags (reused in ATS page) */
+.kw-tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin: 0.15rem;
+}
+.kw-matched { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+.kw-missing { background: rgba(239,68,68,0.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+/* Suggestion lists (reused in ATS page) */
+.sugg-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sugg-list li {
+    padding: 0.4rem 0;
+    padding-left: 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    position: relative;
+}
+.sugg-list li:last-child { border-bottom: none; }
+.sugg-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+}
+
+/* Empty col placeholder */
+.col-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    padding: 1.5rem 0.5rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    margin-top: 0.5rem;
+}

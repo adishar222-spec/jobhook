@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Register — CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-brand">
+            <span class="brand-icon">🚀</span>
+            <h1>Get Started</h1>
+            <p>Create your CareerAI account</p>
+        </div>
+
+        <div class="auth-error" id="auth-error"></div>
+
+        <form id="register-form">
+            <div class="auth-form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="Jane Smith" required autocomplete="name" />
+            </div>
+            <div class="auth-form-group">
+                <label for="email">Email address</label>
+                <input type="email" id="email" placeholder="you@example.com" required autocomplete="email" />
+            </div>
+            <div class="auth-form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Create a strong password" required
+                    autocomplete="new-password" />
+            </div>
+            <div class="auth-form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" placeholder="Confirm your password" required
+                    autocomplete="new-password" />
+            </div>
+            <div class="auth-form-group">
+                <label for="target_role">Target Role</label>
+                <input type="text" id="target_role" placeholder="e.g. Software Engineer, Data Scientist" />
+            </div>
+
+            <button type="submit" class="auth-submit-btn" id="register-btn">Create Account</button>
+        </form>
+
+        <p class="auth-footer">
+            Already have an account? <a href="/auth/login">Sign in →</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById("register-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("name").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirm_password").value;
+        const target_role = document.getElementById("target_role").value.trim();
+        const btn = document.getElementById("register-btn");
+        const errorEl = document.getElementById("auth-error");
+
+        if (password !== confirmPassword) {
+            errorEl.textContent = "Passwords do not match.";
+            errorEl.classList.add("visible");
+            return;
+        }
+
+        if (password.length < 6) {
+            errorEl.textContent = "Password must be at least 6 characters.";
+            errorEl.classList.add("visible");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span> Creating account...`;
+        errorEl.classList.remove("visible");
+
+        try {
+            const res = await API.post("/auth/register", { name, email, password, confirm_password: confirmPassword, target_role });
+            if (res && res.ok) {
+                const data = await res.json();
+                localStorage.setItem("access_token", data.access_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
+                localStorage.setItem("user_name", name);
+                window.location.href = "/dashboard";
+            } else {
+                const data = await res.json();
+                errorEl.textContent = data.error || "Registration failed. Please try again.";
+                errorEl.classList.add("visible");
+            }
+        } catch (err) {
+            errorEl.textContent = "Connection error. Please try again.";
+            errorEl.classList.add("visible");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = "Create Account";
+        }
+    });
+</script>
+{% endblock %}

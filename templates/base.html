@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="CareerAI — AI-powered resume analysis, job matching, cover letter generation and auto-apply." />
+    <title>{% block title %}CareerAI{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="nav-brand">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="CareerAI Logo" width="34" height="34" />
+            <span>CareerAI</span>
+        </a>
+        <div class="nav-links" id="nav-links">
+            <a href="/dashboard" id="nav-dashboard" style="display: none;">Dashboard</a>
+            <a href="/resume/upload" id="nav-resume" style="display: none;">Resume</a>
+            <a href="/jobs" id="nav-jobs" style="display: none;">Jobs</a>
+            <a href="/courses" id="nav-courses" style="display: none;">Courses</a>
+            <a href="/courses/saved" id="nav-saved-courses" style="display: none;">Saved Courses</a>
+            <a href="/ats" id="nav-ats" style="display: none;">ATS Score</a>
+            <a href="/cover-letter" id="nav-cover" style="display: none;">Cover Letter</a>
+            <a href="/tracker" id="nav-tracker" style="display: none;">Tracker</a>
+            <a href="/auth/login" id="login-btn-nav" class="btn btn-outline" style="display: none;">Sign In</a>
+            <button id="logout-btn" class="btn btn-outline" style="display: none;" onclick="logout()">Logout</button>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">☰</button>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script>
+        // Hamburger toggle
+        document.getElementById("hamburger").addEventListener("click", () => {
+            document.getElementById("nav-links").classList.toggle("open");
+        });
+
+        // Highlight active nav link
+        (function () {
+            const path = window.location.pathname;
+            const links = {
+                "/dashboard": "nav-dashboard",
+                "/resume": "nav-resume",
+                "/jobs": "nav-jobs",
+                "/courses/saved": "nav-saved-courses",
+                "/courses": "nav-courses",
+                "/ats": "nav-ats",
+                "/cover-letter": "nav-cover",
+                "/tracker": "nav-tracker",
+            };
+            for (const [prefix, id] of Object.entries(links)) {
+                if (path.startsWith(prefix)) {
+                    const el = document.getElementById(id);
+                    if (el) el.style.color = "var(--text-main)";
+                }
+            }
+        })();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

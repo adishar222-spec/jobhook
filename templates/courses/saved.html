@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Courses — JobHook{% endblock %}
+
+{% block extra_css %}
+<style>
+    .jobs-header {
+        margin-bottom: 2rem;
+    }
+
+    .jobs-header h1 {
+        margin-bottom: 0.2rem;
+    }
+
+    .jobs-header p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    /* ── Job grid ────────────────────────────────────────────── */
+    #courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.25rem;
+    }
+
+    /* ── Course card ────────────────────────────────────────────── */
+    .course-card {
+        background: var(--surface);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+
+    .course-card:hover {
+        border-color: rgba(139, 92, 246, 0.5);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+    }
+
+    .job-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .job-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .job-company {
+        font-size: 0.83rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-top: 0.15rem;
+    }
+
+    .platform-badge {
+        flex-shrink: 0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.18rem 0.55rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .badge-edx {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+    }
+
+    .badge-youtube {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+
+    .badge-db {
+        background: rgba(139, 92, 246, 0.15);
+        color: #c4b5fd;
+    }
+
+    .job-img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        border-radius: var(--radius);
+        background: var(--darker);
+    }
+
+    .job-desc {
+        font-size: 0.83rem;
+        color: var(--text-muted);
+        line-height: 1.55;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    .job-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: auto;
+    }
+
+    .job-actions .btn {
+        flex: 1;
+        padding: 0.5rem;
+        font-size: 0.83rem;
+        text-align: center;
+        text-decoration: none;
+    }
+
+    .loading-skeleton {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        animation: pulse 1.5s ease infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.35;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="jobs-header">
+    <h1>Saved Courses</h1>
+    <p>Courses you've bookmarked for later learning.</p>
+</div>
+
+<div id="courses-grid">
+    <div class="loading-skeleton" style="height:200px;"></div>
+    <div class="loading-skeleton" style="height:200px;"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    requireAuth();
+
+    function platformBadge(platform) {
+        const map = {
+            edx: { cls: "badge-edx", label: "EDX" },
+            youtube: { cls: "badge-youtube", label: "YouTube" },
+            db: { cls: "badge-db", label: "Featured" },
+        };
+        const b = map[platform] || { cls: "badge-db", label: platform || "Course" };
+        return `<span class="platform-badge ${b.cls}">${b.label}</span>`;
+    }
+
+    function renderCards(savedRecords) {
+        const grid = document.getElementById("courses-grid");
+        if (!savedRecords || savedRecords.length === 0) {
+            grid.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);">
+                <div style="font-size:3rem;margin-bottom:1rem;">📚</div>
+                <p>No saved courses yet. Go to the <a href="/courses" style="color:var(--primary);">Courses Search</a> to find some.</p>
+            </div>`;
+            return;
+        }
+
+        grid.innerHTML = "";
+        savedRecords.forEach(record => {
+            const course = record.course;
+            if (!course) return; // skip if course no longer exists
+
+            const title = course.title || course.name || "Untitled";
+            const provider = course.provider || course.company || "";
+            const desc = course.description || "";
+            const link = course.link || "#";
+            const platform = course.platform || "db";
+            const thumbUrl = course.thumbnail || null;
+            const savedDate = new Date(record.saved_at).toLocaleDateString();
+
+            const card = document.createElement("div");
+            card.className = "course-card";
+            card.innerHTML = `
+            <div class="job-card-top">
+                <div>
+                    <div class="job-title">${title}</div>
+                    <div class="job-company">${provider}</div>
+                </div>
+                ${platformBadge(platform)}
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: -0.2rem; margin-bottom: 0.3rem;">Saved on ${savedDate}</div>
+            ${thumbUrl ? `<img src="${thumbUrl}" class="job-img" alt="Thumbnail" />` : ""}
+            ${desc ? `<p class="job-desc">${desc}</p>` : ""}
+            <div class="job-actions">
+                <button class="btn btn-outline" style="border-color: var(--danger); color: var(--danger);" onclick="removeCourse('${record._id}', this)">❌ Remove</button>
+                <a href="${link}" target="_blank" rel="noopener" class="btn btn-ghost">View ↗</a>
+            </div>`;
+            grid.appendChild(card);
+        });
+    }
+
+    async function loadSavedCourses() {
+        try {
+            const res = await API.get(`/courses/saved`);
+            if (!res || !res.ok) throw new Error("Failed to load");
+            const data = await res.json();
+            renderCards(data);
+        } catch (err) {
+            console.error(err);
+            document.getElementById("courses-grid").innerHTML =
+                `<p style="color:var(--danger);grid-column:1/-1;">Error loading saved courses.</p>`;
+        }
+    }
+
+    async function removeCourse(savedId, btn) {
+        if (!confirm("Remove this course from your saved list?")) return;
+
+        btn.disabled = true;
+        btn.textContent = "Removing…";
+        try {
+            const res = await API.delete(`/courses/saved/${savedId}`);
+            if (res && res.ok) {
+                showToast("Course removed.");
+                loadSavedCourses(); // refresh list
+            } else {
+                throw new Error("Failed to delete");
+            }
+        } catch (e) {
+            showToast("Error removing course", "error");
+            btn.disabled = false;
+            btn.textContent = "❌ Remove";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadSavedCourses);
+</script>
+{% endblock %}

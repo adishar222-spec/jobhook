@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}AI Cover Letter Generator — CareerAI{% endblock %}
+
+{% block extra_css %}
+<style>
+.cl-page { max-width: 1100px; margin: 0 auto; }
+.cl-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; align-items: start; }
+@media (max-width: 860px) { .cl-layout { grid-template-columns: 1fr; } }
+
+.cl-history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0.9rem;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+}
+.cl-history-info { flex: 1; min-width: 0; }
+.cl-history-info strong { display: block; font-size: 0.85rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl-history-info span { font-size: 0.75rem; color: var(--text-muted); }
+
+.cl-editor-wrapper { display: flex; flex-direction: column; gap: 0.75rem; }
+.cl-editor-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+#cl-editor {
+    min-height: 460px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-main);
+    font-family: 'Georgia', serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 1.5rem;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+#cl-editor:focus { outline: none; border-color: var(--primary); }
+
+.spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cl-page">
+    <div style="margin-bottom:2rem;">
+        <h1 style="margin-bottom:0.25rem;">✉️ AI Cover Letter Generator</h1>
+        <p>Generate a tailored, professional cover letter in seconds using your resume and the job description.</p>
+    </div>
+
+    <div class="cl-layout">
+        <!-- Left: Config -->
+        <div class="card">
+            <h2 style="font-size:1rem;margin-bottom:1.5rem;">Configure</h2>
+
+            <div style="margin-bottom:1rem;">
+                <label for="cl-resume">Your Resume</label>
+                <select id="cl-resume">
+                    <option value="">Loading resumes...</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+                <label for="cl-role">Target Role</label>
+                <input type="text" id="cl-role" placeholder="e.g. Senior Data Scientist" />
+            </div>
+
+            <div style="margin-bottom:1rem;">
+                <label for="cl-company">Company Name</label>
+                <input type="text" id="cl-company" placeholder="e.g. Google, Stripe, OpenAI" />
+            </div>
+
+            <div style="margin-bottom:1.5rem;">
+                <label for="cl-jd">Job Description</label>
+                <textarea id="cl-jd" rows="8" placeholder="Paste the full job description here..."></textarea>
+            </div>
+
+            <button id="generate-btn" class="btn btn-primary" style="width:100%;">
+                ✨ Generate Cover Letter
+            </button>
+
+            <!-- History -->
+            <div style="margin-top:2rem;">
+                <h3 style="font-size:0.85rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:0.75rem;">Recent Letters</h3>
+                <div id="cl-history">
+                    <p style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:.75rem 0;">No saved letters yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Editor -->
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h2 style="font-size:1rem;margin:0;">Cover Letter Preview</h2>
+                <div class="cl-editor-actions">
+                    <button id="copy-cl-btn" class="btn btn-outline" style="padding:.4rem .8rem;font-size:.8rem;">📋 Copy</button>
+                    <button id="save-cl-btn" class="btn btn-outline" style="padding:.4rem .8rem;font-size:.8rem;">💾 Save Draft</button>
+                </div>
+            </div>
+            <div class="cl-editor-wrapper">
+                <textarea id="cl-editor" placeholder="Your AI-generated cover letter will appear here...&#10;&#10;Feel free to edit it before copying or saving."></textarea>
+            </div>
+            <p style="margin-top:.75rem;font-size:0.8rem;color:var(--text-muted);">
+                💡 Tip: Edit the letter before sending — personalized tweaks make a big difference!
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/cover_letter.js') }}"></script>
+{% endblock %}

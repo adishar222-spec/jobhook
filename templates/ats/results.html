@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}ATS Score Analyzer — CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tracker.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div style="max-width:960px;margin:0 auto;">
+    <div style="margin-bottom:2rem;">
+        <h1 style="margin-bottom:0.25rem;">📊 ATS Score Analyzer</h1>
+        <p>Paste a job description to see how well your resume matches — and get AI-powered suggestions.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;">
+        <!-- Left: Inputs -->
+        <div class="card">
+            <h2 style="font-size:1rem;margin-bottom:1.5rem;">Configure Analysis</h2>
+
+            <div style="margin-bottom:1.25rem;">
+                <label for="resume-select">Select Resume</label>
+                <select id="resume-select">
+                    <option value="">Loading resumes...</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom:1.5rem;">
+                <label for="jd-input">Job Description</label>
+                <textarea id="jd-input" rows="12" placeholder="Paste the full job description here..."></textarea>
+            </div>
+
+            <button id="score-btn" class="btn btn-primary" style="width:100%;">
+                📊 Calculate ATS Score
+            </button>
+        </div>
+
+        <!-- Right: Results -->
+        <div>
+            <!-- Score ring -->
+            <div class="card" style="text-align:center;margin-bottom:1.25rem;">
+                <div id="results-placeholder" style="padding:2rem;color:var(--text-muted);">
+                    <div style="font-size:3rem;margin-bottom:0.75rem;">🎯</div>
+                    <p>Select a resume and paste a job description, then click Calculate.</p>
+                </div>
+
+                <div id="results-container" style="display:none;">
+                    <div class="score-ring" style="--pct:0;margin:0 auto 1rem auto;" id="score-ring-el">
+                        <span id="score-value">0%</span>
+                    </div>
+                    <h3 id="rating-label" style="font-size:1.4rem;margin-bottom:0.25rem;">—</h3>
+                    <p style="font-size:0.85rem;color:var(--text-muted);">ATS compatibility score</p>
+                </div>
+            </div>
+
+            <!-- Keywords (shown after scoring) -->
+            <div id="keywords-section" style="display:none;">
+                <div class="card" style="margin-bottom:1.25rem;">
+                    <h4 style="color:var(--success);margin-bottom:0.75rem;">✅ Matched Keywords</h4>
+                    <div id="matched-keywords"></div>
+                </div>
+
+                <div class="card" style="margin-bottom:1.25rem;">
+                    <h4 style="color:var(--danger);margin-bottom:0.75rem;">❌ Missing Keywords</h4>
+                    <div id="missing-keywords"></div>
+                </div>
+
+                <div class="card" style="margin-bottom:1.25rem;">
+                    <h4 style="margin-bottom:0.75rem;">🛠 Skill Gap Analysis</h4>
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Skills you have:</p>
+                    <div id="skill-gap-matched" style="margin-bottom:0.75rem;"></div>
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Skills to learn:</p>
+                    <div id="skill-gap-missing"></div>
+                </div>
+
+                <div class="card">
+                    <h4 style="color:var(--primary);margin-bottom:0.75rem;">💡 AI Suggestions</h4>
+                    <div id="ai-suggestions"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/ats.js') }}"></script>
+<script>
+// Show keywords section when results come in
+const origRenderResults = window.__atsRenderResults;
+document.addEventListener("ats:results", () => {
+    document.getElementById("results-placeholder").style.display = "none";
+    document.getElementById("results-container").style.display = "block";
+    document.getElementById("keywords-section").style.display = "block";
+});
+</script>
+{% endblock %}

@@ -1,0 +1,460 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>Welcome back, <span id="user-greeting">there</span> 👋</h1>
+        <p>Here's your career progress at a glance.</p>
+    </div>
+    <a href="/resume/upload" class="btn btn-primary">⬆ Upload Resume</a>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-grid" id="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-info">
+            <div class="stat-value" id="stat-resumes">—</div>
+            <div class="stat-label">Resumes</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📤</div>
+        <div class="stat-info">
+            <div class="stat-value" id="stat-applied">—</div>
+            <div class="stat-label">Applications Sent</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">💬</div>
+        <div class="stat-info">
+            <div class="stat-value" id="stat-interviews">—</div>
+            <div class="stat-label">Interviews</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+            <div class="stat-value" id="stat-ats">—</div>
+            <div class="stat-label">Avg ATS Score</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main grid: Recent Apps + Quick Actions -->
+<div class="dashboard-grid">
+    <!-- Recent Applications -->
+    <div class="card">
+        <div class="dash-section-title">🕐 Recent Applications</div>
+        <div id="recent-apps-list">
+            <div class="empty-state">
+                <span class="empty-icon">📋</span>
+                <p>No applications yet. Find and save jobs to track them here.</p>
+                <a href="/jobs" class="btn btn-primary">Browse Jobs</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions + Resume Status -->
+    <div style="display:flex;flex-direction:column;gap:1.5rem;">
+        <div class="card" id="profile-card">
+            <div class="dash-section-title"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span>👤 User Profile</span>
+                <button id="edit-profile-btn" class="btn btn-outline"
+                    style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="toggleEditProfile()">Edit</button>
+            </div>
+
+            <div class="profile-info-group">
+                <label>Name</label>
+                <div id="profile-name-val" class="profile-value">—</div>
+            </div>
+            <div class="profile-info-group">
+                <label>Target Role</label>
+                <div id="profile-role-val" class="profile-value">—</div>
+            </div>
+            <div class="profile-info-group">
+                <label>Location</label>
+                <div id="profile-location-val" class="profile-value">—</div>
+            </div>
+            <div class="profile-info-group">
+                <label>LinkedIn</label>
+                <div id="profile-linkedin-val" class="profile-value">—</div>
+            </div>
+            <div class="profile-info-group">
+                <label>Portfolio</label>
+                <div id="profile-portfolio-val" class="profile-value">—</div>
+            </div>
+            <div class="profile-info-group">
+                <label>Skills</label>
+                <div id="profile-skills-val" class="profile-value">—</div>
+            </div>
+            <div class="profile-info-group" style="grid-column: 1 / -1;">
+                <label>Summary</label>
+                <div id="profile-summary-val" class="profile-value" style="white-space: pre-wrap;">—</div>
+            </div>
+
+            <!-- Expandable Sections -->
+            <div class="profile-expand-section" style="grid-column: 1 / -1;">
+                <details>
+                    <summary>💼 Full Experience</summary>
+                    <div id="profile-exp-list" class="profile-list-view">—</div>
+                </details>
+                <details>
+                    <summary>🎓 Education</summary>
+                    <div id="profile-edu-list" class="profile-list-view">—</div>
+                </details>
+                <details>
+                    <summary>🚀 Projects</summary>
+                    <div id="profile-projects-list" class="profile-list-view">—</div>
+                </details>
+                <details>
+                    <summary>🏆 Certificates & Courses</summary>
+                    <div id="profile-certs-list" class="profile-list-view">—</div>
+                </details>
+                <details>
+                    <summary>🌐 Languages & Interests</summary>
+                    <div id="profile-misc-list" class="profile-list-view">—</div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <form id="profile-form" style="display: none;" onsubmit="saveProfile(event)">
+        <div class="profile-form-grid">
+            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                <label for="edit-name">Name</label>
+                <input type="text" id="edit-name" required />
+            </div>
+            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                <label for="edit-role">Target Role</label>
+                <input type="text" id="edit-role" />
+            </div>
+            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                <label for="edit-location">Location</label>
+                <input type="text" id="edit-location" />
+            </div>
+            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                <label for="edit-linkedin">LinkedIn URL</label>
+                <input type="url" id="edit-linkedin" placeholder="https://linkedin.com/in/..." />
+            </div>
+            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                <label for="edit-portfolio">Portfolio URL</label>
+                <input type="url" id="edit-portfolio" placeholder="https://..." />
+            </div>
+            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                <label for="edit-exp">Experience (Years)</label>
+                <input type="number" id="edit-exp" min="0" />
+            </div>
+            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                <label for="edit-skills">Skills (comma separated)</label>
+                <input type="text" id="edit-skills" placeholder="e.g. Python, SQL, Git" />
+            </div>
+            <div class="auth-form-group" style="grid-column: 1 / -1; margin-bottom: 0.75rem;">
+                <label for="edit-summary">Summary</label>
+                <textarea id="edit-summary" rows="3" placeholder="Brief professional summary..."></textarea>
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Save</button>
+            <button type="button" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;"
+                onclick="toggleEditProfile()">Cancel</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="dash-section-title">📄 Resume Status</div>
+    <div id="resume-status-container">
+        <div class="empty-state">
+            <span class="empty-icon">📂</span>
+            <p>No resume uploaded yet.</p>
+            <a href="/resume/upload" class="btn btn-outline">Upload Now</a>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        requireAuth();
+
+        // Greeting
+        const name = localStorage.getItem("user_name");
+        if (name) document.getElementById("user-greeting").textContent = name.split(" ")[0];
+
+        await Promise.all([loadStats(), loadRecentApps(), loadResumeStatus(), loadUserProfile()]);
+    });
+
+    async function loadStats() {
+        try {
+            const [resumeRes, appsRes] = await Promise.all([
+                API.get("/resume/"),
+                API.get("/tracker/applications")
+            ]);
+
+            if (resumeRes && resumeRes.ok) {
+                const resumes = await resumeRes.json();
+                document.getElementById("stat-resumes").textContent = resumes.length;
+            }
+
+            if (appsRes && appsRes.ok) {
+                const apps = await appsRes.json();
+                const applied = apps.filter(a => ["applied", "interview", "offer"].includes(a.status)).length;
+                const interviews = apps.filter(a => a.status === "interview").length;
+                document.getElementById("stat-applied").textContent = applied;
+                document.getElementById("stat-interviews").textContent = interviews;
+
+                if (apps.length > 0) {
+                    const avg = Math.round(apps.reduce((s, a) => s + (a.ats_score || 0), 0) / apps.length);
+                    document.getElementById("stat-ats").textContent = avg + "%";
+                } else {
+                    document.getElementById("stat-ats").textContent = "—";
+                }
+            }
+        } catch (e) { console.error("Stats error", e); }
+    }
+
+    async function loadRecentApps() {
+        try {
+            const res = await API.get("/tracker/applications");
+            if (!res || !res.ok) return;
+            const apps = await res.json();
+            const container = document.getElementById("recent-apps-list");
+            if (apps.length === 0) return;
+
+            container.innerHTML = "";
+            apps.slice(0, 5).forEach(app => {
+                const company = app.job?.company || "Unknown Company";
+                const title = app.job?.title || "Unknown Role";
+                const status = app.status || "saved";
+                const date = app.updated_at
+                    ? new Date(app.updated_at?.$date || app.updated_at).toLocaleDateString()
+                    : "—";
+                const item = document.createElement("div");
+                item.className = "app-mini-card";
+                item.innerHTML = `
+                <div class="app-mini-info">
+                    <strong>${title}</strong>
+                    <span>${company} · ${date}</span>
+                </div>
+                <span class="status-badge status-${status}">${status}</span>
+            `;
+                container.appendChild(item);
+            });
+
+            if (apps.length > 5) {
+                const link = document.createElement("a");
+                link.href = "/tracker";
+                link.className = "btn btn-outline";
+                link.style.cssText = "display:block;width:100%;margin-top:1rem;text-align:center;";
+                link.textContent = `View all ${apps.length} applications →`;
+                container.appendChild(link);
+            }
+        } catch (e) { console.error("Recent apps error", e); }
+    }
+
+    async function loadResumeStatus() {
+        try {
+            const res = await API.get("/resume/");
+            if (!res || !res.ok) return;
+            const resumes = await res.json();
+            if (resumes.length === 0) return;
+
+            const container = document.getElementById("resume-status-container");
+            container.innerHTML = "";
+            resumes.slice(0, 3).forEach(r => {
+                const name = r.parsed?.name || r.file_name;
+                const skills = r.parsed?.skills?.length || 0;
+                const card = document.createElement("div");
+                card.className = "resume-status-card";
+                card.innerHTML = `
+                <div class="rs-icon">📄</div>
+                <div class="rs-info">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <strong>${name}</strong>
+                        ${r.storage_name ? `<a href="/api/resume/view/${r.storage_name}" target="_blank" class="btn btn-outline btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">👁️ View</a>` : ''}
+                    </div>
+                    <span>${skills} skills detected · ${r.file_name}</span>
+                </div>
+            `;
+                container.appendChild(card);
+            });
+        } catch (e) { console.error("Resume status error", e); }
+    }
+
+    let userProfile = null;
+
+    async function loadUserProfile() {
+        try {
+            const res = await API.get("/auth/me");
+            if (res && res.ok) {
+                const user = await res.json();
+                userProfile = user;
+
+                if (user.name) {
+                    document.getElementById("user-greeting").textContent = user.name.split(" ")[0];
+                    localStorage.setItem("user_name", user.name);
+                }
+
+                const profile = user.profile || {};
+                document.getElementById("profile-name-val").textContent = user.name || "—";
+                document.getElementById("profile-role-val").textContent = profile.target_role || "—";
+                document.getElementById("profile-location-val").textContent = profile.location || "—";
+                document.getElementById("profile-linkedin-val").innerHTML = profile.linkedin ? `<a href="${profile.linkedin}" target="_blank">View profile</a>` : "—";
+                document.getElementById("profile-portfolio-val").innerHTML = profile.portfolio ? `<a href="${profile.portfolio}" target="_blank">View site</a>` : "—";
+                document.getElementById("profile-skills-val").textContent = (profile.skills && profile.skills.length > 0) ? profile.skills.join(", ") : "—";
+                document.getElementById("profile-summary-val").textContent = profile.summary || "—";
+
+                // Render Experience
+                const expList = document.getElementById("profile-exp-list");
+                if (profile.experience && profile.experience.length > 0) {
+                    expList.innerHTML = profile.experience.map(ex => `
+                    <div class="profile-list-item">
+                        <strong>${ex.title}</strong> at ${ex.company}
+                        <span>${ex.start || ""} — ${ex.end || "Present"}</span>
+                        ${ex.bullets ? `<ul>${ex.bullets.map(b => `<li>${b}</li>`).join("")}</ul>` : ""}
+                    </div>
+                `).join("");
+                } else { expList.textContent = "No experience detailed."; }
+
+                // Render Education
+                const eduList = document.getElementById("profile-edu-list");
+                if (profile.education && profile.education.length > 0) {
+                    eduList.innerHTML = profile.education.map(ed => `
+                    <div class="profile-list-item">
+                        <strong>${ed.degree || ""} ${ed.field ? 'in ' + ed.field : ''}</strong>
+                        <span>${ed.school || ""} (${ed.year || ""})</span>
+                    </div>
+                `).join("");
+                } else { eduList.textContent = "No education detailed."; }
+
+                // Render Projects
+                const prjList = document.getElementById("profile-projects-list");
+                if (profile.projects && profile.projects.length > 0) {
+                    prjList.innerHTML = profile.projects.map(p => `
+                    <div class="profile-list-item">
+                        <strong>${p.name}</strong>
+                        <p style="font-size:0.85rem;margin:0.2rem 0;">${p.description || ""}</p>
+                    </div>
+                `).join("");
+                } else { prjList.textContent = "No projects detailed."; }
+
+                // Render Certs
+                const certsList = document.getElementById("profile-certs-list");
+                const allCerts = [...(profile.certificates || []), ...(profile.courses || [])];
+                if (allCerts.length > 0) {
+                    certsList.innerHTML = allCerts.map(c => `
+                    <div class="profile-list-item">
+                        <strong>${c.name}</strong> — ${c.issuer || c.platform || ""}
+                    </div>
+                `).join("");
+                } else { certsList.textContent = "No certificates detailed."; }
+
+                // Render Misc (Languages & Interests)
+                const miscList = document.getElementById("profile-misc-list");
+                const langs = profile.languages || [];
+                const interests = profile.interests || [];
+                if (langs.length > 0 || interests.length > 0) {
+                    miscList.innerHTML = `
+                        <div class="profile-list-item">
+                            <strong>Languages</strong>
+                            <span>${langs.join(", ") || "—"}</span>
+                        </div>
+                        <div class="profile-list-item">
+                            <strong>Interests</strong>
+                            <span>${interests.join(", ") || "—"}</span>
+                        </div>
+                    `;
+                } else { miscList.textContent = "No additional details."; }
+
+                document.getElementById("edit-name").value = user.name || "";
+                document.getElementById("edit-role").value = profile.target_role || "";
+                document.getElementById("edit-location").value = profile.location || "";
+                document.getElementById("edit-linkedin").value = profile.linkedin || "";
+                document.getElementById("edit-portfolio").value = profile.portfolio || "";
+                document.getElementById("edit-skills").value = (profile.skills && profile.skills.length > 0) ? profile.skills.join(", ") : "";
+                document.getElementById("edit-summary").value = profile.summary || "";
+            }
+        } catch (e) {
+            console.error("Profile load error", e);
+        }
+    }
+
+    function toggleEditProfile() {
+        const view = document.getElementById("profile-view");
+        const form = document.getElementById("profile-form");
+        const editBtn = document.getElementById("edit-profile-btn");
+
+        if (form.style.display === "none") {
+            form.style.display = "block";
+            view.style.display = "none";
+            editBtn.style.display = "none";
+        } else {
+            form.style.display = "none";
+            view.style.display = "grid";
+            editBtn.style.display = "block";
+        }
+    }
+
+    async function saveProfile(e) {
+        e.preventDefault();
+        const saveBtn = e.target.querySelector("button[type='submit']");
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span class="spinner"></span> Saving...`;
+
+        const name = document.getElementById("edit-name").value.trim();
+        const target_role = document.getElementById("edit-role").value.trim();
+        const location = document.getElementById("edit-location").value.trim();
+        const linkedin = document.getElementById("edit-linkedin").value.trim();
+        const portfolio = document.getElementById("edit-portfolio").value.trim();
+        const skills = document.getElementById("edit-skills").value.split(",").map(s => s.trim()).filter(s => s.length > 0);
+        const summary = document.getElementById("edit-summary").value.trim();
+
+        try {
+            const token = localStorage.getItem("access_token");
+            const res = await fetch("/api/auth/profile", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    name,
+                    profile: {
+                        ...userProfile.profile,
+                        target_role,
+                        location,
+                        linkedin,
+                        portfolio,
+                        skills,
+                        summary
+                    }
+                })
+            });
+
+            if (res && res.ok) {
+                showToast("Profile updated successfully");
+                await loadUserProfile();
+                toggleEditProfile();
+            } else {
+                showToast("Failed to update profile", "error");
+            }
+        } catch (err) {
+            showToast("Connection error", "error");
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = "Save";
+        }
+    }
+</script>
+{% endblock %}
