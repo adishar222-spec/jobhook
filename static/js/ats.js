@@ -19,6 +19,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const skillGapMissing = document.getElementById("skill-gap-missing");
     const aiSuggestions = document.getElementById("ai-suggestions");
 
+    // Check if we came from job recommendations with a pending job description
+    const pendingJd = sessionStorage.getItem("pending_jd");
+    if (pendingJd && jdInput) {
+        jdInput.value = pendingJd;
+        sessionStorage.removeItem("pending_jd");
+    }
+
     // Load resumes into select — FIXED: was /resume/list, now /resume/
     try {
         const res = await API.get("/resume/");

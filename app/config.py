@@ -19,6 +19,7 @@ class Config:
     SCRAPE_LIMIT = int(os.getenv("SCRAPE_LIMIT", 30))            # max jobs per platform
     SCRAPE_CACHE_TTL = int(os.getenv("SCRAPE_CACHE_TTL", 1800)) # cache TTL seconds (30 min)
     SCRAPE_HEADLESS = os.getenv("SCRAPE_HEADLESS", "true") == "true"
+    YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
 
 class DevelopmentConfig(Config):

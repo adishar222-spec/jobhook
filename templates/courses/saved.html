@@ -67,32 +67,6 @@
         flex-shrink: 0;
         font-size: 0.7rem;
         font-weight: 700;
-        padding: 0.18rem 0.55rem;
-        border-radius: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-
-    .badge-edx {
-        background: rgba(16, 185, 129, 0.15);
-        color: #10b981;
-    }
-
-    .badge-youtube {
-        background: rgba(239, 68, 68, 0.15);
-        color: #ef4444;
-    }
-
-    .badge-db {
-        background: rgba(139, 92, 246, 0.15);
-        color: #c4b5fd;
-    }
-
-    .job-img {
-        width: 100%;
-        height: 140px;
-        object-fit: cover;
-        border-radius: var(--radius);
         background: var(--darker);
     }
 
@@ -159,13 +133,12 @@
 <script>
     requireAuth();
 
+    const BADGE = {
+        edx: { cls: "badge-edx", label: "edX" },
+        youtube: { cls: "badge-youtube", label: "YouTube" },
+    };
     function platformBadge(platform) {
-        const map = {
-            edx: { cls: "badge-edx", label: "EDX" },
-            youtube: { cls: "badge-youtube", label: "YouTube" },
-            db: { cls: "badge-db", label: "Featured" },
-        };
-        const b = map[platform] || { cls: "badge-db", label: platform || "Course" };
+        const b = BADGE[platform] || { cls: "badge-db", label: platform || "Course" };
         return `<span class="platform-badge ${b.cls}">${b.label}</span>`;
     }
 

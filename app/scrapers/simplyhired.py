@@ -111,10 +111,16 @@ def parse(role: str, driver) -> list[dict]:
 
                 # Get link
                 try:
-                    link_el = card.find_element(By.CSS_SELECTOR, "[data-testid='searchSerpJobTitle']")
+                    link_el = card.find_element(By.CSS_SELECTOR, "a[data-testid='searchSerpJobTitleLink']")
                     link = link_el.get_attribute("href") or ""
                 except NoSuchElementException:
-                    link = ""
+                    try:
+                        link_el = card.find_element(By.CSS_SELECTOR, "[data-testid='searchSerpJobTitle']")
+                        link = link_el.get_attribute("href")
+                        if not link:
+                            link = link_el.find_element(By.TAG_NAME, "a").get_attribute("href") or ""
+                    except NoSuchElementException:
+                        link = ""
 
                 if not title or link in seen_links:
                     continue

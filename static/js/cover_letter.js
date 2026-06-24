@@ -17,6 +17,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let currentLetterId = null;
 
+    // Check if we came from job recommendations with pending data
+    const pendingJd = sessionStorage.getItem("pending_cl_jd");
+    if (pendingJd && jdInput) {
+        jdInput.value = pendingJd;
+        sessionStorage.removeItem("pending_cl_jd");
+    }
+    const pendingRole = sessionStorage.getItem("pending_cl_role");
+    if (pendingRole && roleInput) {
+        roleInput.value = pendingRole;
+        sessionStorage.removeItem("pending_cl_role");
+    }
+    const pendingCompany = sessionStorage.getItem("pending_cl_company");
+    if (pendingCompany && companyInput) {
+        companyInput.value = pendingCompany;
+        sessionStorage.removeItem("pending_cl_company");
+    }
+
     // Load resumes into dropdown
     async function loadResumes() {
         if (!resumeSelect) return;

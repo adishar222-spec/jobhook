@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from bson import ObjectId
 import logging
@@ -12,37 +12,49 @@ courses_bp = Blueprint("courses", __name__)
 scraped_model = ScrapedCourseModel()
 saved_model = SavedCourseModel()
 
+ALL_PROVIDERS = ["edx", "youtube"]
+
 # ── helpers ────────────────────────────────────────────────────────────────────
+
+def _run_provider(name: str, keyword: str, driver) -> list[dict]:
+    """Instantiate the correct provider and call fetch()."""
+    from ..scrapers.providers import PROVIDERS
+    cls = PROVIDERS.get(name)
+    if not cls:
+        logger.warning(f"[courses] Unknown provider: {name}")
+        return []
+    try:
+        results = cls.fetch(keyword, driver)
+        logger.info(f"[courses] {cls.label}: {len(results)} courses")
+        return results
+    except Exception as e:
+        logger.error(f"[courses] Provider '{name}' failed: {e}")
+        return []
+
 
 def _scrape_worker(keyword: str, platforms: list[str], cache_key: str):
     """
-    Runs Selenium scrapers, stores results in MongoDB,
-    updates the in-memory cache, then marks the scrape as done.
+    Runs each requested provider, stores results in MongoDB,
+    then marks scrape as done in cache.
     """
-    from ..scrapers.webdriver import get_driver
-    from ..scrapers import edx, youtube
-
     set_scrape_status(cache_key, "running")
     all_courses: list[dict] = []
+
+    # EDX needs Selenium; YouTube uses the Data API
+    selenium_providers = [p for p in platforms if p == "edx"]
+    api_providers = [p for p in platforms if p != "edx"]
+
     driver = None
     try:
-        driver = get_driver()
+        if selenium_providers:
+            from ..scrapers.webdriver import get_driver
+            driver = get_driver()
 
-        if "edx" in platforms:
-            try:
-                courses = edx.parse(keyword, driver)
-                all_courses.extend(courses)
-                logger.info(f"[scrape_worker] EDX: {len(courses)} courses")
-            except Exception as e:
-                logger.error(f"[scrape_worker] EDX failed: {e}")
+        for p in selenium_providers:
+            all_courses.extend(_run_provider(p, keyword, driver))
 
-        if "youtube" in platforms:
-            try:
-                courses = youtube.parse(keyword, driver)
-                all_courses.extend(courses)
-                logger.info(f"[scrape_worker] YouTube: {len(courses)} courses")
-            except Exception as e:
-                logger.error(f"[scrape_worker] YouTube failed: {e}")
+        for p in api_providers:
+            all_courses.extend(_run_provider(p, keyword, None))
 
     finally:
         if driver:
@@ -51,7 +63,7 @@ def _scrape_worker(keyword: str, platforms: list[str], cache_key: str):
             except Exception:
                 pass
 
-    # Deduplicate by link before storing
+    # Deduplicate by link
     unique: dict[str, dict] = {c["link"]: c for c in all_courses if c.get("link")}
     deduped = list(unique.values())
 
@@ -70,13 +82,15 @@ def _scrape_worker(keyword: str, platforms: list[str], cache_key: str):
 def scrape():
     data = request.get_json(silent=True) or {}
     keyword = data.get("keyword", "").strip()
-    
+
     if not keyword:
         return jsonify({"error": "Provide a keyword to search for courses."}), 400
 
-    platforms = data.get("platforms", ["edx", "youtube"])
+    platforms = data.get("platforms", ALL_PROVIDERS)
     if not isinstance(platforms, list):
-        platforms = ["edx", "youtube"]
+        platforms = ALL_PROVIDERS
+    # Sanitize — only accept known providers
+    platforms = [p for p in platforms if p in ALL_PROVIDERS] or ALL_PROVIDERS
 
     cache_key = f"{keyword.lower()}::{','.join(sorted(platforms))}"
 
@@ -91,9 +105,8 @@ def scrape():
             "scraping": False,
         }), 200
 
-    # Cache miss
+    # Cache miss — run synchronously (Chrome opens for edX if in list)
     _scrape_worker(keyword, platforms, cache_key)
-    
     scraped_courses = course_cache.get(cache_key) or []
 
     return jsonify({
@@ -105,22 +118,15 @@ def scrape():
     }), 200
 
 
-@courses_bp.route("/scrape-status", methods=["GET"])
+@courses_bp.route("/providers", methods=["GET"])
 @jwt_required()
-def scrape_status():
-    keyword = request.args.get("keyword", "").strip()
-    platforms_raw = request.args.get("platforms", "edx,youtube")
-    platforms = [p.strip() for p in platforms_raw.split(",")]
-    cache_key = f"{keyword.lower()}::{','.join(sorted(platforms))}"
-
-    status = get_scrape_status(cache_key)
-    cached = course_cache.get(cache_key) if status == "done" else None
-
-    return jsonify({
-        "status": status,
-        "courses": cached or [],
-        "count": len(cached) if cached else 0,
-    }), 200
+def list_providers():
+    """Return available provider names and labels."""
+    from ..scrapers.providers import PROVIDERS
+    return jsonify([
+        {"name": name, "label": cls.label}
+        for name, cls in PROVIDERS.items()
+    ]), 200
 
 
 @courses_bp.route("/search", methods=["GET"])
@@ -129,10 +135,7 @@ def search():
     query = request.args.get("q", "")
     platform = request.args.get("platform", "all")
     limit = min(int(request.args.get("limit", 20)), 60)
-
-    # Live scraped courses
     scraped_courses = scraped_model.search_scraped(query, platform=platform, limit=limit)
-
     return jsonify(scraped_courses[:limit]), 200
 
 
@@ -143,15 +146,12 @@ def search():
 def get_saved_courses():
     user_id = get_jwt_identity()
     saved_records = saved_model.get_by_user(user_id)
-    
-    # Enrich with course details
     for record in saved_records:
         if record.get("course_id"):
             course = mongo.db.scraped_courses.find_one({"_id": ObjectId(record["course_id"])})
             if course:
                 course["_id"] = str(course["_id"])
                 record["course"] = course
-                
     return jsonify(saved_records), 200
 
 
@@ -161,10 +161,8 @@ def save_course():
     user_id = get_jwt_identity()
     data = request.get_json()
     course_id = data.get("course_id")
-    
     if not course_id:
         return jsonify({"error": "course_id is required"}), 400
-        
     saved_id = saved_model.create(user_id, course_id)
     return jsonify({"message": "Course saved", "saved_id": saved_id}), 201
 
