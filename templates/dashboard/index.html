@@ -47,138 +47,201 @@
     </div>
 </div>
 
-<!-- Main grid: Recent Apps + Quick Actions -->
+<!-- Main grid: Resume Management + Profile -->
 <div class="dashboard-grid">
-    <!-- Recent Applications -->
-    <div class="card">
-        <div class="dash-section-title">🕐 Recent Applications</div>
-        <div id="recent-apps-list">
-            <div class="empty-state">
-                <span class="empty-icon">📋</span>
-                <p>No applications yet. Find and save jobs to track them here.</p>
-                <a href="/jobs" class="btn btn-primary">Browse Jobs</a>
+    <!-- Resume Management Card (Replaces Recent Applications) -->
+    <div class="card" id="resume-mgmt-card">
+        <div class="dash-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📄 Resume Management</span>
+            <div id="resume-action-bar" style="display:none; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" onclick="showUploadForm()">↩ Change Resume</button>
+                <button class="btn btn-primary btn-sm" id="download-pdf-btn" onclick="downloadResumePDF()">⬇ Download
+                    PDF</button>
+            </div>
+        </div>
+
+        <!-- Upload Form (Initial State) -->
+        <div id="resume-upload-section">
+            <form id="resume-upload-form" enctype="multipart/form-data">
+                <div class="resume-upload-area" id="upload-drop-zone"
+                    style="padding: 2rem; border: 2px dashed var(--border); border-radius: var(--radius); text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                    <span class="upload-icon" style="font-size: 3rem; display: block; margin-bottom: 1rem;">📤</span>
+                    <h3 style="margin-bottom: 0.4rem;">Upload Resume</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">PDF, DOCX, DOC
+                        supported</p>
+                    <button type="button" class="btn btn-primary" id="upload-btn"
+                        onclick="document.getElementById('resume_file').click()">Upload & Parse</button>
+                    <input type="file" id="resume_file" name="file" accept=".pdf,.doc,.docx" style="display: none;" />
+                </div>
+            </form>
+            <div id="upload-status"
+                style="display:none; margin-top:1rem; text-align: center; color: var(--text-muted);"></div>
+        </div>
+
+        <!-- Resume Preview — rendered as a proper resume document -->
+        <div id="resume-preview-section" style="display: none;">
+            <div id="resume-document" class="resume-doc-paper">
+                <div id="resume-view-content"></div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions + Resume Status -->
+    <!-- Profile Card -->
     <div style="display:flex;flex-direction:column;gap:1.5rem;">
         <div class="card" id="profile-card">
             <div class="dash-section-title"
                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <span>👤 User Profile</span>
                 <button id="edit-profile-btn" class="btn btn-outline"
-                    style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="toggleEditProfile()">Edit</button>
+                    style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="toggleEditProfile()">Edit
+                    Profile</button>
             </div>
 
-            <div class="profile-info-group">
-                <label>Name</label>
-                <div id="profile-name-val" class="profile-value">—</div>
-            </div>
-            <div class="profile-info-group">
-                <label>Target Role</label>
-                <div id="profile-role-val" class="profile-value">—</div>
-            </div>
-            <div class="profile-info-group">
-                <label>Location</label>
-                <div id="profile-location-val" class="profile-value">—</div>
-            </div>
-            <div class="profile-info-group">
-                <label>LinkedIn</label>
-                <div id="profile-linkedin-val" class="profile-value">—</div>
-            </div>
-            <div class="profile-info-group">
-                <label>Portfolio</label>
-                <div id="profile-portfolio-val" class="profile-value">—</div>
-            </div>
-            <div class="profile-info-group">
-                <label>Skills</label>
-                <div id="profile-skills-val" class="profile-value">—</div>
-            </div>
-            <div class="profile-info-group" style="grid-column: 1 / -1;">
-                <label>Summary</label>
-                <div id="profile-summary-val" class="profile-value" style="white-space: pre-wrap;">—</div>
+            <!-- Profile View Mode -->
+            <div id="profile-view" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+                <div class="profile-info-group">
+                    <label>Name</label>
+                    <div id="profile-name-val" class="profile-value">—</div>
+                </div>
+                <div class="profile-info-group">
+                    <label>Target Role</label>
+                    <div id="profile-role-val" class="profile-value">—</div>
+                </div>
+                <div class="profile-info-group">
+                    <label>Location</label>
+                    <div id="profile-location-val" class="profile-value">—</div>
+                </div>
+                <div class="profile-info-group">
+                    <label>Phone</label>
+                    <div id="profile-phone-val" class="profile-value">—</div>
+                </div>
+                <div class="profile-info-group">
+                    <label>GitHub</label>
+                    <div id="profile-github-val" class="profile-value">—</div>
+                </div>
+                <div class="profile-info-group">
+                    <label>LinkedIn</label>
+                    <div id="profile-linkedin-val" class="profile-value">—</div>
+                </div>
+                <div class="profile-info-group">
+                    <label>Kaggle</label>
+                    <div id="profile-kaggle-val" class="profile-value">—</div>
+                </div>
+                <div class="profile-info-group" style="grid-column: 1 / -1;">
+                    <label>Summary</label>
+                    <div id="profile-summary-val" class="profile-value" style="white-space: pre-wrap;">—</div>
+                </div>
+
+                <!-- Expandable Sections with Edit buttons -->
+                <div class="profile-expand-section" style="grid-column: 1 / -1; margin-top: 0.5rem;">
+                    <details>
+                        <summary style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>🛠 Skills</span>
+                            <button class="btn btn-outline btn-sm" style="padding: 0.2rem 0.6rem; font-size: 0.72rem;"
+                                onclick="event.preventDefault(); event.stopPropagation(); editSection('skills_list')">Edit</button>
+                        </summary>
+                        <div id="profile-skills-list" class="profile-list-view">—</div>
+                    </details>
+                    <details>
+                        <summary style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>🎓 Education</span>
+                            <button class="btn btn-outline btn-sm" style="padding: 0.2rem 0.6rem; font-size: 0.72rem;"
+                                onclick="event.preventDefault(); event.stopPropagation(); editSection('education')">Edit</button>
+                        </summary>
+                        <div id="profile-edu-list" class="profile-list-view">—</div>
+                    </details>
+                    <details>
+                        <summary style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>💼 Experience</span>
+                            <button class="btn btn-outline btn-sm" style="padding: 0.2rem 0.6rem; font-size: 0.72rem;"
+                                onclick="event.preventDefault(); event.stopPropagation(); editSection('experience')">Edit</button>
+                        </summary>
+                        <div id="profile-exp-list" class="profile-list-view">—</div>
+                    </details>
+                    <details>
+                        <summary style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>🤝 Internships</span>
+                            <button class="btn btn-outline btn-sm" style="padding: 0.2rem 0.6rem; font-size: 0.72rem;"
+                                onclick="event.preventDefault(); event.stopPropagation(); editSection('internships')">Edit</button>
+                        </summary>
+                        <div id="profile-internships-list" class="profile-list-view">—</div>
+                    </details>
+                    <details>
+                        <summary style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>🚀 Projects</span>
+                            <button class="btn btn-outline btn-sm" style="padding: 0.2rem 0.6rem; font-size: 0.72rem;"
+                                onclick="event.preventDefault(); event.stopPropagation(); editSection('projects')">Edit</button>
+                        </summary>
+                        <div id="profile-projects-list" class="profile-list-view">—</div>
+                    </details>
+                    <details>
+                        <summary style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>🏆 Certifications & Courses</span>
+                            <button class="btn btn-outline btn-sm" style="padding: 0.2rem 0.6rem; font-size: 0.72rem;"
+                                onclick="event.preventDefault(); event.stopPropagation(); editSection('certificates')">Edit</button>
+                        </summary>
+                        <div id="profile-certs-list" class="profile-list-view">—</div>
+                    </details>
+                    <details>
+                        <summary style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>🌐 Miscellaneous</span>
+                            <button class="btn btn-outline btn-sm" style="padding: 0.2rem 0.6rem; font-size: 0.72rem;"
+                                onclick="event.preventDefault(); event.stopPropagation(); editSection('miscellaneous')">Edit</button>
+                        </summary>
+                        <div id="profile-misc-list" class="profile-list-view">—</div>
+                    </details>
+                </div>
             </div>
 
-            <!-- Expandable Sections -->
-            <div class="profile-expand-section" style="grid-column: 1 / -1;">
-                <details>
-                    <summary>💼 Full Experience</summary>
-                    <div id="profile-exp-list" class="profile-list-view">—</div>
-                </details>
-                <details>
-                    <summary>🎓 Education</summary>
-                    <div id="profile-edu-list" class="profile-list-view">—</div>
-                </details>
-                <details>
-                    <summary>🚀 Projects</summary>
-                    <div id="profile-projects-list" class="profile-list-view">—</div>
-                </details>
-                <details>
-                    <summary>🏆 Certificates & Courses</summary>
-                    <div id="profile-certs-list" class="profile-list-view">—</div>
-                </details>
-                <details>
-                    <summary>🌐 Languages & Interests</summary>
-                    <div id="profile-misc-list" class="profile-list-view">—</div>
-                </details>
-            </div>
+            <!-- Profile Edit Form -->
+            <form id="profile-form" style="display: none;" onsubmit="saveProfile(event)">
+                <div class="profile-form-grid">
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-name">Name</label>
+                        <input type="text" id="edit-name" required />
+                    </div>
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-role">Target Role</label>
+                        <input type="text" id="edit-role" />
+                    </div>
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-location">Location</label>
+                        <input type="text" id="edit-location" />
+                    </div>
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-phone">Phone</label>
+                        <input type="text" id="edit-phone" placeholder="+1..." />
+                    </div>
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-github">GitHub URL</label>
+                        <input type="url" id="edit-github" placeholder="https://github.com/..." />
+                    </div>
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-linkedin">LinkedIn URL</label>
+                        <input type="url" id="edit-linkedin" placeholder="https://linkedin.com/in/..." />
+                    </div>
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-kaggle">Kaggle URL</label>
+                        <input type="url" id="edit-kaggle" placeholder="https://kaggle.com/..." />
+                    </div>
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-kaggle">Kaggle URL</label>
+                        <input type="url" id="edit-kaggle" placeholder="https://kaggle.com/..." />
+                    </div>
+                    <div class="auth-form-group" style="grid-column: 1 / -1; margin-bottom: 0.75rem;">
+                        <label for="edit-summary">Summary</label>
+                        <textarea id="edit-summary" rows="3" placeholder="Brief professional summary..."></textarea>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                    <button type="submit" class="btn btn-primary"
+                        style="padding: 0.5rem 1rem; font-size: 0.9rem;">Save</button>
+                    <button type="button" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;"
+                        onclick="toggleEditProfile()">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
-
-    <form id="profile-form" style="display: none;" onsubmit="saveProfile(event)">
-        <div class="profile-form-grid">
-            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
-                <label for="edit-name">Name</label>
-                <input type="text" id="edit-name" required />
-            </div>
-            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
-                <label for="edit-role">Target Role</label>
-                <input type="text" id="edit-role" />
-            </div>
-            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
-                <label for="edit-location">Location</label>
-                <input type="text" id="edit-location" />
-            </div>
-            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
-                <label for="edit-linkedin">LinkedIn URL</label>
-                <input type="url" id="edit-linkedin" placeholder="https://linkedin.com/in/..." />
-            </div>
-            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
-                <label for="edit-portfolio">Portfolio URL</label>
-                <input type="url" id="edit-portfolio" placeholder="https://..." />
-            </div>
-            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
-                <label for="edit-exp">Experience (Years)</label>
-                <input type="number" id="edit-exp" min="0" />
-            </div>
-            <div class="auth-form-group" style="margin-bottom: 0.75rem;">
-                <label for="edit-skills">Skills (comma separated)</label>
-                <input type="text" id="edit-skills" placeholder="e.g. Python, SQL, Git" />
-            </div>
-            <div class="auth-form-group" style="grid-column: 1 / -1; margin-bottom: 0.75rem;">
-                <label for="edit-summary">Summary</label>
-                <textarea id="edit-summary" rows="3" placeholder="Brief professional summary..."></textarea>
-            </div>
-        </div>
-        <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-            <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Save</button>
-            <button type="button" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;"
-                onclick="toggleEditProfile()">Cancel</button>
-        </div>
-    </form>
-</div>
-
-<div class="card">
-    <div class="dash-section-title">📄 Resume Status</div>
-    <div id="resume-status-container">
-        <div class="empty-state">
-            <span class="empty-icon">📂</span>
-            <p>No resume uploaded yet.</p>
-            <a href="/resume/upload" class="btn btn-outline">Upload Now</a>
-        </div>
-    </div>
-</div>
 </div>
 </div>
 {% endblock %}
@@ -188,222 +251,382 @@
     document.addEventListener("DOMContentLoaded", async () => {
         requireAuth();
 
-        // Greeting
-        const name = localStorage.getItem("user_name");
-        if (name) document.getElementById("user-greeting").textContent = name.split(" ")[0];
+        const storedName = localStorage.getItem("user_name");
+        if (storedName) document.getElementById("user-greeting").textContent = storedName.split(" ")[0];
 
-        await Promise.all([loadStats(), loadRecentApps(), loadResumeStatus(), loadUserProfile()]);
+        await Promise.all([loadStats(), loadResumeManagement(), loadUserProfile()]);
+
+        // Wire file input
+        const fileInput = document.getElementById("resume_file");
+        if (fileInput) {
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files[0]) handleUpload(e.target.files[0]);
+            });
+        }
+
+        // Drag and drop on upload zone
+        const dropZone = document.getElementById("upload-drop-zone");
+        if (dropZone) {
+            dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--primary)"; });
+            dropZone.addEventListener("dragleave", () => { dropZone.style.borderColor = "var(--border)"; });
+            dropZone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = "var(--border)";
+                const file = e.dataTransfer.files[0];
+                if (file) handleUpload(file);
+            });
+        }
     });
 
+    // ── Stats ─────────────────────────────────────────────────────────────
     async function loadStats() {
         try {
-            const [resumeRes, appsRes] = await Promise.all([
-                API.get("/resume/"),
-                API.get("/tracker/applications")
-            ]);
-
+            const [resumeRes, appsRes] = await Promise.all([API.get("/resume/"), API.get("/tracker/applications")]);
             if (resumeRes && resumeRes.ok) {
                 const resumes = await resumeRes.json();
                 document.getElementById("stat-resumes").textContent = resumes.length;
             }
-
             if (appsRes && appsRes.ok) {
                 const apps = await appsRes.json();
-                const applied = apps.filter(a => ["applied", "interview", "offer"].includes(a.status)).length;
-                const interviews = apps.filter(a => a.status === "interview").length;
-                document.getElementById("stat-applied").textContent = applied;
-                document.getElementById("stat-interviews").textContent = interviews;
-
-                if (apps.length > 0) {
-                    const avg = Math.round(apps.reduce((s, a) => s + (a.ats_score || 0), 0) / apps.length);
-                    document.getElementById("stat-ats").textContent = avg + "%";
-                } else {
-                    document.getElementById("stat-ats").textContent = "—";
-                }
+                document.getElementById("stat-applied").textContent = apps.filter(a => ["applied", "interview", "offer"].includes(a.status)).length;
+                document.getElementById("stat-interviews").textContent = apps.filter(a => a.status === "interview").length;
+                document.getElementById("stat-ats").textContent = apps.length
+                    ? Math.round(apps.reduce((s, a) => s + (a.ats_score || 0), 0) / apps.length) + "%"
+                    : "—";
             }
         } catch (e) { console.error("Stats error", e); }
     }
 
-    async function loadRecentApps() {
-        try {
-            const res = await API.get("/tracker/applications");
-            if (!res || !res.ok) return;
-            const apps = await res.json();
-            const container = document.getElementById("recent-apps-list");
-            if (apps.length === 0) return;
-
-            container.innerHTML = "";
-            apps.slice(0, 5).forEach(app => {
-                const company = app.job?.company || "Unknown Company";
-                const title = app.job?.title || "Unknown Role";
-                const status = app.status || "saved";
-                const date = app.updated_at
-                    ? new Date(app.updated_at?.$date || app.updated_at).toLocaleDateString()
-                    : "—";
-                const item = document.createElement("div");
-                item.className = "app-mini-card";
-                item.innerHTML = `
-                <div class="app-mini-info">
-                    <strong>${title}</strong>
-                    <span>${company} · ${date}</span>
-                </div>
-                <span class="status-badge status-${status}">${status}</span>
-            `;
-                container.appendChild(item);
-            });
-
-            if (apps.length > 5) {
-                const link = document.createElement("a");
-                link.href = "/tracker";
-                link.className = "btn btn-outline";
-                link.style.cssText = "display:block;width:100%;margin-top:1rem;text-align:center;";
-                link.textContent = `View all ${apps.length} applications →`;
-                container.appendChild(link);
-            }
-        } catch (e) { console.error("Recent apps error", e); }
-    }
-
-    async function loadResumeStatus() {
+    // ── Resume Management Card ────────────────────────────────────────────
+    async function loadResumeManagement() {
         try {
             const res = await API.get("/resume/");
             if (!res || !res.ok) return;
             const resumes = await res.json();
-            if (resumes.length === 0) return;
 
-            const container = document.getElementById("resume-status-container");
-            container.innerHTML = "";
-            resumes.slice(0, 3).forEach(r => {
-                const name = r.parsed?.name || r.file_name;
-                const skills = r.parsed?.skills?.length || 0;
-                const card = document.createElement("div");
-                card.className = "resume-status-card";
-                card.innerHTML = `
-                <div class="rs-icon">📄</div>
-                <div class="rs-info">
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <strong>${name}</strong>
-                        ${r.storage_name ? `<a href="/api/resume/view/${r.storage_name}" target="_blank" class="btn btn-outline btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">👁️ View</a>` : ''}
-                    </div>
-                    <span>${skills} skills detected · ${r.file_name}</span>
-                </div>
-            `;
-                container.appendChild(card);
-            });
-        } catch (e) { console.error("Resume status error", e); }
+            const uploadSection = document.getElementById("resume-upload-section");
+            const previewSection = document.getElementById("resume-preview-section");
+
+            if (resumes.length === 0) {
+                uploadSection.style.display = "block";
+                previewSection.style.display = "none";
+                return;
+            }
+
+            uploadSection.style.display = "none";
+            previewSection.style.display = "block";
+            renderResumePreview(resumes[0].parsed, resumes[0]);
+        } catch (e) { console.error("Resume management error", e); }
     }
 
+    // Stored parsed data for download
+    let _currentParsed = null;
+
+    function renderResumePreview(p, resumeData) {
+        if (!p) return;
+        _currentParsed = p;
+        const container = document.getElementById("resume-view-content");
+
+        // Show action bar
+        const actionBar = document.getElementById("resume-action-bar");
+        if (actionBar) actionBar.style.display = "flex";
+
+        // Build contact line
+        const contactParts = [p.email, p.phone, p.location].filter(Boolean).join(" &nbsp;·&nbsp; ");
+        const links = [
+            p.github ? `<a href="${p.github}" target="_blank" class="resume-link">github.com/${p.github.split('/').pop()}</a>` : '',
+            p.linkedin ? `<a href="${p.linkedin}" target="_blank" class="resume-link">linkedin.com/in/${p.linkedin.split('/').pop()}</a>` : '',
+            p.kaggle ? `<a href="${p.kaggle}" target="_blank" class="resume-link">kaggle.com/${p.kaggle.split('/').pop()}</a>` : ''
+        ].filter(Boolean).join(" &nbsp;|&nbsp; ");
+
+        const sectionBlock = (title, content) =>
+            content ? `<div class="resume-section">
+                <div class="resume-section-title">${title}</div>
+                <hr class="resume-divider"/>
+                ${content}
+            </div>` : '';
+
+        const skillsHtml = (p.skills && p.skills.length > 0)
+            ? `<div class="resume-skills-wrap">${p.skills.map(s => `<span class="resume-skill-badge">${s}</span>`).join("")}</div>`
+            : '';
+
+        const expHtml = (p.experience && p.experience.length > 0)
+            ? p.experience.map(ex => `
+                <div class="resume-entry">
+                    <div class="resume-entry-header">
+                        <span class="resume-entry-title">${ex.title || ''}</span>
+                        <span class="resume-entry-date">${ex.start || ''} — ${ex.end || 'Present'}</span>
+                    </div>
+                    <div class="resume-entry-sub">${ex.company || ''}</div>
+                    ${(ex.bullets && ex.bullets.length > 0)
+                    ? `<ul class="resume-bullets">${ex.bullets.map(b => `<li>${b}</li>`).join("")}</ul>`
+                    : ''}
+                </div>`).join('')
+            : '';
+
+        const internHtml = (p.internships && p.internships.length > 0)
+            ? p.internships.map(i => `
+                <div class="resume-entry">
+                    <div class="resume-entry-header">
+                        <span class="resume-entry-title">${i.title || ''}</span>
+                        <span class="resume-entry-date">${i.start || ''} — ${i.end || ''}</span>
+                    </div>
+                    <div class="resume-entry-sub">${i.company || ''}</div>
+                    ${(i.bullets && i.bullets.length > 0)
+                    ? `<ul class="resume-bullets">${i.bullets.map(b => `<li>${b}</li>`).join("")}</ul>`
+                    : ''}
+                </div>`).join('')
+            : '';
+
+        const eduHtml = (p.education && p.education.length > 0)
+            ? p.education.map(ed => `
+                <div class="resume-entry">
+                    <div class="resume-entry-header">
+                        <span class="resume-entry-title">${ed.degree || ''}${ed.field ? ' in ' + ed.field : ''}</span>
+                        <span class="resume-entry-date">${ed.year || ''}</span>
+                    </div>
+                    <div class="resume-entry-sub">${ed.school || ''}</div>
+                </div>`).join('')
+            : '';
+
+        const prjHtml = (p.projects && p.projects.length > 0)
+            ? p.projects.map(prj => `
+                <div class="resume-entry">
+                    <div class="resume-entry-header">
+                        <span class="resume-entry-title">${prj.name || ''}</span>
+                        ${(prj.tech && prj.tech.length > 0)
+                    ? `<span class="resume-entry-tech">${prj.tech.join(' · ')}</span>`
+                    : ''}
+                    </div>
+                    ${prj.description ? `<p class="resume-entry-desc">${prj.description}</p>` : ''}
+                </div>`).join('')
+            : '';
+
+        const certHtml = (p.certificates && p.certificates.length > 0)
+            ? p.certificates.map(c =>
+                `<div class="resume-entry-cert"><strong>${c.name}</strong>${c.issuer ? ` <span style="color:var(--text-muted)">— ${c.issuer}</span>` : ''}</div>`
+            ).join('')
+            : '';
+
+        container.innerHTML = `
+            <div class="resume-doc-body">
+                <!-- Header -->
+                <div class="resume-header" style="text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                    <h1 class="resume-name" style="margin-bottom: 0.25rem;">${p.name || 'Your Name'}</h1>
+                    ${contactParts ? `<p class="resume-contact" style="margin-bottom: 0.25rem;">${contactParts}</p>` : ''}
+                    ${links ? `<div class="resume-links" style="justify-content: center;">${links}</div>` : ''}
+                </div>
+
+                ${sectionBlock('SUMMARY', p.summary ? `<p class="resume-summary">${p.summary}</p>` : '')}
+                ${sectionBlock('EDUCATION', eduHtml)}
+                ${sectionBlock('EXPERIENCE', expHtml)}
+                ${sectionBlock('INTERNSHIPS', internHtml)}
+                ${sectionBlock('PROJECTS', prjHtml)}
+                ${sectionBlock('SKILLS', skillsHtml)}
+                ${sectionBlock('CERTIFICATIONS & COURSES', certHtml)}
+                ${sectionBlock('MISCELLANEOUS', (p.miscellaneous && p.miscellaneous.length > 0)
+            ? p.miscellaneous.map(m => `<div class="resume-entry-cert"><strong>${m.key}</strong>: ${m.value}</div>`).join('')
+            : '')}
+            </div>`;
+    }
+
+    function showUploadForm() {
+        document.getElementById("resume-upload-section").style.display = "block";
+        document.getElementById("resume-preview-section").style.display = "none";
+        const bar = document.getElementById("resume-action-bar");
+        if (bar) bar.style.display = "none";
+    }
+
+    async function downloadResumePDF() {
+        if (!_currentParsed) { showToast("No resume data to download", "error"); return; }
+        const btn = document.getElementById("download-pdf-btn");
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span> Generating...`;
+        try {
+            // Merge profile data into currentParsed for a complete PDF
+            const profile = (userProfile && userProfile.profile) || {};
+            const payload = {
+                ..._currentParsed,
+                github: profile.github || _currentParsed.github,
+                linkedin: profile.linkedin || _currentParsed.linkedin,
+                kaggle: profile.kaggle || _currentParsed.kaggle,
+                skills_list: profile.skills_list || [],
+                certificates: profile.certificates || [],
+                miscellaneous: profile.miscellaneous || []
+            };
+
+            const token = localStorage.getItem("access_token");
+            const res = await fetch("/api/resume/download", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ parsed: payload })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                showToast(err.error || "PDF generation failed", "error");
+                return;
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${(_currentParsed.name || 'resume').replace(/\s+/g, '_')}_resume.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+            showToast("Resume downloaded!", "success");
+        } catch (e) {
+            showToast("Download failed", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    }
+
+    async function handleUpload(file) {
+        const uploadBtn = document.getElementById("upload-btn");
+        const statusDiv = document.getElementById("upload-status");
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `<span class="spinner"></span> Parsing...`;
+        statusDiv.style.display = "block";
+        statusDiv.innerHTML = `⏳ AI is parsing your resume...`;
+
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+            const token = localStorage.getItem("access_token");
+            const res = await fetch("/api/resume/upload", {
+                method: "POST",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                body: formData
+            });
+            if (res.ok) {
+                showToast("Resume uploaded and parsed!", "success");
+                statusDiv.style.display = "none";
+                await Promise.all([loadResumeManagement(), loadUserProfile(), loadStats()]);
+            } else {
+                const err = await res.json();
+                showToast(err.error || "Upload failed", "error");
+                statusDiv.innerHTML = `<span style="color:var(--danger)">${err.error || "Upload failed"}</span>`;
+            }
+        } catch (e) {
+            showToast("Error during upload", "error");
+            statusDiv.innerHTML = `<span style="color:var(--danger)">Network error.</span>`;
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = "Upload & Parse";
+        }
+    }
+
+    // ── User Profile ─────────────────────────────────────────────────────
     let userProfile = null;
 
     async function loadUserProfile() {
         try {
             const res = await API.get("/auth/me");
-            if (res && res.ok) {
-                const user = await res.json();
-                userProfile = user;
+            if (!res || !res.ok) return;
+            const user = await res.json();
+            userProfile = user;
+            const profile = user.profile || {};
 
-                if (user.name) {
-                    document.getElementById("user-greeting").textContent = user.name.split(" ")[0];
-                    localStorage.setItem("user_name", user.name);
-                }
-
-                const profile = user.profile || {};
-                document.getElementById("profile-name-val").textContent = user.name || "—";
-                document.getElementById("profile-role-val").textContent = profile.target_role || "—";
-                document.getElementById("profile-location-val").textContent = profile.location || "—";
-                document.getElementById("profile-linkedin-val").innerHTML = profile.linkedin ? `<a href="${profile.linkedin}" target="_blank">View profile</a>` : "—";
-                document.getElementById("profile-portfolio-val").innerHTML = profile.portfolio ? `<a href="${profile.portfolio}" target="_blank">View site</a>` : "—";
-                document.getElementById("profile-skills-val").textContent = (profile.skills && profile.skills.length > 0) ? profile.skills.join(", ") : "—";
-                document.getElementById("profile-summary-val").textContent = profile.summary || "—";
-
-                // Render Experience
-                const expList = document.getElementById("profile-exp-list");
-                if (profile.experience && profile.experience.length > 0) {
-                    expList.innerHTML = profile.experience.map(ex => `
-                    <div class="profile-list-item">
-                        <strong>${ex.title}</strong> at ${ex.company}
-                        <span>${ex.start || ""} — ${ex.end || "Present"}</span>
-                        ${ex.bullets ? `<ul>${ex.bullets.map(b => `<li>${b}</li>`).join("")}</ul>` : ""}
-                    </div>
-                `).join("");
-                } else { expList.textContent = "No experience detailed."; }
-
-                // Render Education
-                const eduList = document.getElementById("profile-edu-list");
-                if (profile.education && profile.education.length > 0) {
-                    eduList.innerHTML = profile.education.map(ed => `
-                    <div class="profile-list-item">
-                        <strong>${ed.degree || ""} ${ed.field ? 'in ' + ed.field : ''}</strong>
-                        <span>${ed.school || ""} (${ed.year || ""})</span>
-                    </div>
-                `).join("");
-                } else { eduList.textContent = "No education detailed."; }
-
-                // Render Projects
-                const prjList = document.getElementById("profile-projects-list");
-                if (profile.projects && profile.projects.length > 0) {
-                    prjList.innerHTML = profile.projects.map(p => `
-                    <div class="profile-list-item">
-                        <strong>${p.name}</strong>
-                        <p style="font-size:0.85rem;margin:0.2rem 0;">${p.description || ""}</p>
-                    </div>
-                `).join("");
-                } else { prjList.textContent = "No projects detailed."; }
-
-                // Render Certs
-                const certsList = document.getElementById("profile-certs-list");
-                const allCerts = [...(profile.certificates || []), ...(profile.courses || [])];
-                if (allCerts.length > 0) {
-                    certsList.innerHTML = allCerts.map(c => `
-                    <div class="profile-list-item">
-                        <strong>${c.name}</strong> — ${c.issuer || c.platform || ""}
-                    </div>
-                `).join("");
-                } else { certsList.textContent = "No certificates detailed."; }
-
-                // Render Misc (Languages & Interests)
-                const miscList = document.getElementById("profile-misc-list");
-                const langs = profile.languages || [];
-                const interests = profile.interests || [];
-                if (langs.length > 0 || interests.length > 0) {
-                    miscList.innerHTML = `
-                        <div class="profile-list-item">
-                            <strong>Languages</strong>
-                            <span>${langs.join(", ") || "—"}</span>
-                        </div>
-                        <div class="profile-list-item">
-                            <strong>Interests</strong>
-                            <span>${interests.join(", ") || "—"}</span>
-                        </div>
-                    `;
-                } else { miscList.textContent = "No additional details."; }
-
-                document.getElementById("edit-name").value = user.name || "";
-                document.getElementById("edit-role").value = profile.target_role || "";
-                document.getElementById("edit-location").value = profile.location || "";
-                document.getElementById("edit-linkedin").value = profile.linkedin || "";
-                document.getElementById("edit-portfolio").value = profile.portfolio || "";
-                document.getElementById("edit-skills").value = (profile.skills && profile.skills.length > 0) ? profile.skills.join(", ") : "";
-                document.getElementById("edit-summary").value = profile.summary || "";
+            if (user.name) {
+                document.getElementById("user-greeting").textContent = user.name.split(" ")[0];
+                localStorage.setItem("user_name", user.name);
             }
-        } catch (e) {
-            console.error("Profile load error", e);
-        }
+
+            document.getElementById("profile-name-val").textContent = user.name || "—";
+            document.getElementById("profile-role-val").textContent = profile.target_role || "—";
+            document.getElementById("profile-location-val").textContent = profile.location || "—";
+            document.getElementById("profile-phone-val").textContent = profile.phone || "—";
+            document.getElementById("profile-github-val").innerHTML = profile.github
+                ? `<a href="${profile.github}" target="_blank">View GitHub</a>` : "—";
+            document.getElementById("profile-linkedin-val").innerHTML = profile.linkedin
+                ? `<a href="${profile.linkedin}" target="_blank">View LinkedIn</a>` : "—";
+            document.getElementById("profile-kaggle-val").innerHTML = profile.kaggle
+                ? `<a href="${profile.kaggle}" target="_blank">View Kaggle</a>` : "—";
+            document.getElementById("profile-skills-list").innerHTML = (profile.skills_list || []).length > 0
+                ? (profile.skills_list || []).map(s => `<div class="profile-list-item"><strong>${s.name}</strong><span>${s.level || ""}</span></div>`).join("")
+                : `<span style="color:var(--text-muted);font-size:0.85rem;">No skills added.</span>`;
+            document.getElementById("profile-summary-val").textContent = profile.summary || "—";
+
+            renderEduList(profile.education);
+            renderExpList(profile.experience);
+            renderInternList(profile.internships);
+            renderPrjList(profile.projects);
+
+            const allCerts = profile.certificates || [];
+            document.getElementById("profile-certs-list").innerHTML = allCerts.length > 0
+                ? allCerts.map(c => `<div class="profile-list-item"><strong>${c.name}</strong> — ${c.issuer || ""}</div>`).join("")
+                : `<span style="color:var(--text-muted);font-size:0.85rem;">No certificates added.</span>`;
+
+            const misc = profile.miscellaneous || [];
+            document.getElementById("profile-misc-list").innerHTML = misc.length > 0
+                ? misc.map(m => `<div class="profile-list-item"><strong>${m.key || "Detail"}</strong><span>${m.value || ""}</span></div>`).join("")
+                : `<span style="color:var(--text-muted);font-size:0.85rem;">No additional details.</span>`;
+
+            // Populate edit form
+            document.getElementById("edit-name").value = user.name || "";
+            document.getElementById("edit-role").value = profile.target_role || "";
+            document.getElementById("edit-location").value = profile.location || "";
+            document.getElementById("edit-phone").value = profile.phone || "";
+            document.getElementById("edit-github").value = profile.github || "";
+            document.getElementById("edit-linkedin").value = profile.linkedin || "";
+            document.getElementById("edit-kaggle").value = profile.kaggle || "";
+            document.getElementById("edit-kaggle").value = profile.kaggle || "";
+            document.getElementById("edit-summary").value = profile.summary || "";
+        } catch (e) { console.error("Profile load error", e); }
+    }
+
+    function renderExpList(experience) {
+        document.getElementById("profile-exp-list").innerHTML = (experience && experience.length > 0)
+            ? experience.map(ex => `<div class="profile-list-item">
+                <strong>${ex.title}</strong> at ${ex.company}
+                <span>${ex.start || ""} — ${ex.end || "Present"}</span>
+                ${ex.bullets && ex.bullets.length > 0 ? `<ul>${ex.bullets.map(b => `<li>${b}</li>`).join("")}</ul>` : ""}
+              </div>`).join("")
+            : `<span style="color:var(--text-muted);font-size:0.85rem;">No experience added.</span>`;
+    }
+
+    function renderInternList(internships) {
+        document.getElementById("profile-internships-list").innerHTML = (internships && internships.length > 0)
+            ? internships.map(i => `<div class="profile-list-item">
+                <strong>${i.title}</strong> at ${i.company}
+                <span>${i.start || ""} — ${i.end || ""}</span>
+                ${i.bullets && i.bullets.length > 0 ? `<ul>${i.bullets.map(b => `<li>${b}</li>`).join("")}</ul>` : ""}
+              </div>`).join("")
+            : `<span style="color:var(--text-muted);font-size:0.85rem;">No internships added.</span>`;
+    }
+
+    function renderEduList(education) {
+        document.getElementById("profile-edu-list").innerHTML = (education && education.length > 0)
+            ? education.map(ed => `<div class="profile-list-item">
+                <strong>${ed.degree || ""} ${ed.field ? "in " + ed.field : ""}</strong>
+                <span>${ed.school || ""} ${ed.year ? "(" + ed.year + ")" : ""}</span>
+              </div>`).join("")
+            : `<span style="color:var(--text-muted);font-size:0.85rem;">No education added yet.</span>`;
+    }
+
+    function renderPrjList(projects) {
+        document.getElementById("profile-projects-list").innerHTML = (projects && projects.length > 0)
+            ? projects.map(p => `<div class="profile-list-item">
+                <strong>${p.name}</strong>
+                <p style="font-size:0.85rem;margin:0.2rem 0;">${p.description || ""}</p>
+              </div>`).join("")
+            : `<span style="color:var(--text-muted);font-size:0.85rem;">No projects added yet.</span>`;
     }
 
     function toggleEditProfile() {
         const view = document.getElementById("profile-view");
         const form = document.getElementById("profile-form");
         const editBtn = document.getElementById("edit-profile-btn");
-
-        if (form.style.display === "none") {
-            form.style.display = "block";
-            view.style.display = "none";
-            editBtn.style.display = "none";
-        } else {
-            form.style.display = "none";
-            view.style.display = "grid";
-            editBtn.style.display = "block";
-        }
+        const isHidden = (form.style.display === "none" || form.style.display === "");
+        form.style.display = isHidden ? "block" : "none";
+        view.style.display = isHidden ? "none" : "grid";
+        editBtn.textContent = isHidden ? "Cancel" : "Edit Profile";
     }
 
     async function saveProfile(e) {
@@ -415,9 +638,10 @@
         const name = document.getElementById("edit-name").value.trim();
         const target_role = document.getElementById("edit-role").value.trim();
         const location = document.getElementById("edit-location").value.trim();
+        const phone = document.getElementById("edit-phone").value.trim();
+        const github = document.getElementById("edit-github").value.trim();
         const linkedin = document.getElementById("edit-linkedin").value.trim();
-        const portfolio = document.getElementById("edit-portfolio").value.trim();
-        const skills = document.getElementById("edit-skills").value.split(",").map(s => s.trim()).filter(s => s.length > 0);
+        const kaggle = document.getElementById("edit-kaggle").value.trim();
         const summary = document.getElementById("edit-summary").value.trim();
 
         try {
@@ -431,30 +655,210 @@
                 body: JSON.stringify({
                     name,
                     profile: {
-                        ...userProfile.profile,
-                        target_role,
-                        location,
-                        linkedin,
-                        portfolio,
-                        skills,
-                        summary
+                        ...(userProfile ? userProfile.profile : {}),
+                        target_role, location, phone, github, linkedin, kaggle, summary
                     }
                 })
             });
-
             if (res && res.ok) {
                 showToast("Profile updated successfully");
                 await loadUserProfile();
                 toggleEditProfile();
+                syncResumePreviewFromProfile();
             } else {
                 showToast("Failed to update profile", "error");
             }
+        } catch (err) { showToast("Connection error", "error"); }
+        finally { saveBtn.disabled = false; saveBtn.innerHTML = "Save"; }
+    }
+
+    function syncResumePreviewFromProfile() {
+        const previewSection = document.getElementById("resume-preview-section");
+        if (!userProfile || !previewSection || previewSection.style.display === "none") return;
+        const p = userProfile.profile || {};
+        renderResumePreview({
+            name: userProfile.name,
+            email: p.email, phone: p.phone, location: p.location,
+            linkedin: p.linkedin, portfolio: p.portfolio, summary: p.summary,
+            linkedin: p.linkedin, portfolio: p.portfolio, summary: p.summary,
+            skills: (p.skills_list || []).map(s => s.name), experience: p.experience, education: p.education,
+            projects: p.projects, certificates: p.certificates, miscellaneous: p.miscellaneous
+        }, null);
+    }
+
+    // ── Section Edit Modal ────────────────────────────────────────────────
+    function editSection(section) {
+        if (!userProfile) return;
+        const items = JSON.parse(JSON.stringify((userProfile.profile || {})[section] || []));
+        showSectionModal(section, items);
+    }
+
+    function showSectionModal(section, items) {
+        const existing = document.getElementById("section-edit-modal");
+        if (existing) existing.remove();
+
+        const titles = {
+            education: "🎓 Edit Education",
+            experience: "💼 Edit Experience",
+            internships: "🤝 Edit Internships",
+            projects: "🚀 Edit Projects",
+            certificates: "🏆 Edit Certifications & Courses",
+            miscellaneous: "🌐 Edit Miscellaneous",
+            skills_list: "🛠 Edit Skills"
+        };
+        const modal = document.createElement("div");
+        modal.id = "section-edit-modal";
+        modal.style.cssText = "position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem;";
+
+        const box = document.createElement("div");
+        box.style.cssText = "background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;max-width:700px;width:100%;max-height:88vh;overflow-y:auto;";
+        box.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <h3 style="margin:0;">${titles[section]}</h3>
+                <button onclick="document.getElementById('section-edit-modal').remove()" class="btn btn-outline" style="padding:0.3rem 0.7rem;">✕</button>
+            </div>
+            <div id="modal-items-list"></div>
+            <button onclick="addModalItem('${section}')" class="btn btn-outline" style="width:100%;margin-top:1rem;">+ Add Entry</button>
+            <div style="display:flex;gap:0.75rem;margin-top:1.5rem;justify-content:flex-end;">
+                <button onclick="document.getElementById('section-edit-modal').remove()" class="btn btn-outline">Cancel</button>
+                <button id="modal-save-btn" onclick="saveSection('${section}')" class="btn btn-primary">Save Changes</button>
+            </div>`;
+        modal.appendChild(box);
+        document.body.appendChild(modal);
+
+        window._sectionItems = items;
+        renderModalItems(section);
+        modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+    }
+
+    function renderModalItems(section) {
+        const container = document.getElementById("modal-items-list");
+        if (!container) return;
+        const items = window._sectionItems;
+        container.innerHTML = "";
+
+        if (items.length === 0) {
+            container.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:1.5rem 0;">No entries yet. Click '+ Add Entry' below.</p>`;
+            return;
+        }
+
+        items.forEach((item, idx) => {
+            const card = document.createElement("div");
+            card.style.cssText = "background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.85rem;";
+
+            if (section === "experience" || section === "internships") {
+                card.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+                        <div class="auth-form-group" style="margin:0;"><label>Job Title</label>
+                            <input type="text" value="${escHtml(item.title || '')}" oninput="window._sectionItems[${idx}].title=this.value" placeholder="Software Engineer"/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>Company</label>
+                            <input type="text" value="${escHtml(item.company || '')}" oninput="window._sectionItems[${idx}].company=this.value" placeholder="Google"/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>Start Date</label>
+                            <input type="text" value="${escHtml(item.start || '')}" oninput="window._sectionItems[${idx}].start=this.value" placeholder="Jan 2022"/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>End Date</label>
+                            <input type="text" value="${escHtml(item.end || '')}" oninput="window._sectionItems[${idx}].end=this.value" placeholder="Present"/></div>
+                    </div>
+                    <div class="auth-form-group" style="margin:0;"><label>Bullet Points (one per line)</label>
+                        <textarea rows="3" oninput="window._sectionItems[${idx}].bullets=this.value.split('\\n').filter(b=>b.trim())">${escHtml((item.bullets || []).join('\n'))}</textarea></div>
+                    <button onclick="window._sectionItems.splice(${idx},1);renderModalItems('${section}')" class="btn btn-danger btn-sm" style="margin-top:0.6rem;padding:0.2rem 0.65rem;font-size:0.75rem;">Remove</button>`;
+            } else if (section === "education") {
+                card.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                        <div class="auth-form-group" style="margin:0;"><label>Degree</label>
+                            <input type="text" value="${escHtml(item.degree || '')}" oninput="window._sectionItems[${idx}].degree=this.value" placeholder="B.Sc."/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>Field of Study</label>
+                            <input type="text" value="${escHtml(item.field || '')}" oninput="window._sectionItems[${idx}].field=this.value" placeholder="Computer Science"/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>School</label>
+                            <input type="text" value="${escHtml(item.school || '')}" oninput="window._sectionItems[${idx}].school=this.value" placeholder="MIT"/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>Graduation Year</label>
+                            <input type="text" value="${escHtml(item.year || '')}" oninput="window._sectionItems[${idx}].year=this.value" placeholder="2023"/></div>
+                    </div>
+                    <button onclick="window._sectionItems.splice(${idx},1);renderModalItems('education')" class="btn btn-danger btn-sm" style="margin-top:0.6rem;padding:0.2rem 0.65rem;font-size:0.75rem;">Remove</button>`;
+            } else if (section === "projects") {
+                card.innerHTML = `
+                    <div class="auth-form-group" style="margin-bottom:0.5rem;"><label>Project Name</label>
+                        <input type="text" value="${escHtml(item.name || '')}" oninput="window._sectionItems[${idx}].name=this.value" placeholder="My Awesome Project"/></div>
+                    <div class="auth-form-group" style="margin-bottom:0.5rem;"><label>Description</label>
+                        <textarea rows="2" oninput="window._sectionItems[${idx}].description=this.value">${escHtml(item.description || '')}</textarea></div>
+                    <div class="auth-form-group" style="margin:0;"><label>Technologies (comma separated)</label>
+                        <input type="text" value="${escHtml((item.tech || []).join(', '))}" oninput="window._sectionItems[${idx}].tech=this.value.split(',').map(t=>t.trim()).filter(Boolean)" placeholder="React, Python, MongoDB"/></div>
+                    <button onclick="window._sectionItems.splice(${idx},1);renderModalItems('projects')" class="btn btn-danger btn-sm" style="margin-top:0.6rem;padding:0.2rem 0.65rem;font-size:0.75rem;">Remove</button>`;
+            } else if (section === "certificates") {
+                card.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                        <div class="auth-form-group" style="margin:0;"><label>Certificate Name</label>
+                            <input type="text" value="${escHtml(item.name || '')}" oninput="window._sectionItems[${idx}].name=this.value" placeholder="AWS Solution Architect"/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>Issuer / Platform</label>
+                            <input type="text" value="${escHtml(item.issuer || '')}" oninput="window._sectionItems[${idx}].issuer=this.value" placeholder="Amazon Web Services"/></div>
+                    </div>
+                    <button onclick="window._sectionItems.splice(${idx},1);renderModalItems('certificates')" class="btn btn-danger btn-sm" style="margin-top:0.6rem;padding:0.2rem 0.65rem;font-size:0.75rem;">Remove</button>`;
+            } else if (section === "miscellaneous") {
+                card.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                        <div class="auth-form-group" style="margin:0;"><label>Label</label>
+                            <input type="text" value="${escHtml(item.key || '')}" oninput="window._sectionItems[${idx}].key=this.value" placeholder="Languages"/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>Value</label>
+                            <input type="text" value="${escHtml(item.value || '')}" oninput="window._sectionItems[${idx}].value=this.value" placeholder="English, Malayalam, Hindi"/></div>
+                    </div>
+                    <button onclick="window._sectionItems.splice(${idx},1);renderModalItems('miscellaneous')" class="btn btn-danger btn-sm" style="margin-top:0.6rem;padding:0.2rem 0.65rem;font-size:0.75rem;">Remove</button>`;
+            } else if (section === "skills_list") {
+                card.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                        <div class="auth-form-group" style="margin:0;"><label>Skill Name</label>
+                            <input type="text" value="${escHtml(item.name || '')}" oninput="window._sectionItems[${idx}].name=this.value" placeholder="Python"/></div>
+                        <div class="auth-form-group" style="margin:0;"><label>Level / Category</label>
+                            <input type="text" value="${escHtml(item.level || '')}" oninput="window._sectionItems[${idx}].level=this.value" placeholder="Expert / Technical"/></div>
+                    </div>
+                    <button onclick="window._sectionItems.splice(${idx},1);renderModalItems('skills_list')" class="btn btn-danger btn-sm" style="margin-top:0.6rem;padding:0.2rem 0.65rem;font-size:0.75rem;">Remove</button>`;
+            }
+            container.appendChild(card);
+        });
+    }
+
+    function addModalItem(section) {
+        if (section === "experience" || section === "internships") window._sectionItems.push({ title: "", company: "", start: "", end: "", bullets: [] });
+        else if (section === "education") window._sectionItems.push({ degree: "", field: "", school: "", year: "" });
+        else if (section === "projects") window._sectionItems.push({ name: "", description: "", tech: [] });
+        else if (section === "certificates") window._sectionItems.push({ name: "", issuer: "" });
+        else if (section === "miscellaneous") window._sectionItems.push({ key: "", value: "" });
+        else if (section === "skills_list") window._sectionItems.push({ name: "", level: "" });
+        renderModalItems(section);
+    }
+
+    async function saveSection(section) {
+        const saveBtn = document.getElementById("modal-save-btn");
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span class="spinner"></span> Saving...`;
+
+        const updatedProfile = { ...(userProfile ? userProfile.profile : {}), [section]: window._sectionItems };
+
+        try {
+            const token = localStorage.getItem("access_token");
+            const res = await fetch("/api/auth/profile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                body: JSON.stringify({ profile: updatedProfile })
+            });
+            if (res && res.ok) {
+                showToast(`${section.charAt(0).toUpperCase() + section.slice(1)} updated!`);
+                document.getElementById("section-edit-modal").remove();
+                await loadUserProfile();
+                syncResumePreviewFromProfile();
+            } else {
+                showToast("Failed to save changes", "error");
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = "Save Changes";
+            }
         } catch (err) {
             showToast("Connection error", "error");
-        } finally {
             saveBtn.disabled = false;
-            saveBtn.innerHTML = "Save";
+            saveBtn.innerHTML = "Save Changes";
         }
+    }
+
+    // Utility: escape HTML to prevent XSS in oninput values
+    function escHtml(str) {
+        return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 </script>
 {% endblock %}
