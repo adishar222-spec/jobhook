@@ -4,12 +4,14 @@ from werkzeug.utils import secure_filename
 from .parser import extract_resume_text, extract_email, extract_phone
 from .models import ResumeModel
 from ..ai.groq_client import GroqClient
+from ..auth.models import UserModel
 import os
 import uuid
 import io
 
 resume_bp = Blueprint("resume", __name__)
 resume_model = ResumeModel()
+user_model = UserModel()
 groq = GroqClient()
 
 ALLOWED = {"pdf", "docx", "doc"}
@@ -53,8 +55,31 @@ def upload_resume():
         parsed=parsed
     )
 
+    # Update User Profile with parsed data
+    user = user_model.find_by_id(user_id)
+    if user:
+        current_profile = user.get("profile", {})
+        
+        # Update flat fields
+        for field in ["phone", "linkedin", "github", "kaggle", "summary"]:
+            if parsed.get(field) and not current_profile.get(field):
+                current_profile[field] = parsed[field]
+        
+        # Sync skills to skills_list
+        if parsed.get("skills"):
+            existing_skill_names = {s.get("name").lower() for s in current_profile.get("skills_list", []) if s.get("name")}
+            new_skills = []
+            for s_name in parsed["skills"]:
+                if s_name.lower() not in existing_skill_names:
+                    new_skills.append({"name": s_name, "level": ""})
+            
+            if new_skills:
+                current_profile["skills_list"] = current_profile.get("skills_list", []) + new_skills
+        
+        user_model.update_profile(user_id, current_profile)
+
     return jsonify({
-        "message": "Resume uploaded successfully",
+        "message": "Resume uploaded and profile updated successfully",
         "resume_id": str(resume_id),
         "storage_name": storage_name,
         "parsed": parsed

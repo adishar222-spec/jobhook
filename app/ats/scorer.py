@@ -4,15 +4,40 @@ from typing import Tuple
 
 
 COMMON_STOP_WORDS = {
-    "the", "and", "for", "with", "you", "are", "our", "this",
-    "will", "have", "your", "that", "from", "all", "can", "more"
+    # Basic conjunctions, prepositions, and articles
+    "the", "and", "for", "with", "you", "are", "our", "this", "will", "have",
+    "your", "that", "from", "all", "can", "more", "is", "or", "in", "to", "of",
+    "at", "by", "an", "be", "as", "if", "on", "it", "its", "which", "who", "whom",
+    "whose", "they", "them", "their", "we", "us", "i", "me", "my", "mine",
+
+    # Common auxiliary and modal verbs
+    "do", "does", "did", "done", "doing", "was", "were", "been", "being",
+    "has", "had", "having", "should", "could", "would", "may", "might", "must",
+    "can", "shall",
+
+    # Generic Job Description words (low information content for role)
+    "requirements", "responsibility", "qualified", "role", "candidate", "successful",
+    "ability", "experience", "work", "job", "company", "team", "strong", "excellent",
+    "skills", "knowledge", "desired", "preferred", "required", "including", "using",
+    "plus", "years", "within", "ideal"
 }
 
 
 def tokenize(text: str) -> set:
     """Lowercase, remove punctuation, split into unique meaningful words."""
-    words = re.findall(r"\b[a-zA-Z][a-zA-Z+#\.]{1,}\b", text.lower())
-    return set(w for w in words if w not in COMMON_STOP_WORDS)
+    # Matches words, allowing special chars like C++, .NET, C#
+    # We use a more permissive regex and then clean up trailing punctuation
+    tokens = re.findall(r"\b[a-zA-Z][a-zA-Z0-9+#\.]*", text.lower())
+    
+    cleaned = set()
+    for t in tokens:
+        # Strip trailing dots unless they seem to be part of a tech name (e.g., .js)
+        if t.endswith('.') and not t.endswith('.js') and not t.endswith('.net'):
+            t = t.rstrip('.')
+        
+        if len(t) > 1 and t not in COMMON_STOP_WORDS:
+            cleaned.add(t)
+    return cleaned
 
 
 def extract_keywords(jd_text: str, top_n: int = 40) -> list:
@@ -20,8 +45,15 @@ def extract_keywords(jd_text: str, top_n: int = 40) -> list:
     Frequency-rank keywords from a job description.
     Returns top N meaningful keywords.
     """
-    words = re.findall(r"\b[a-zA-Z][a-zA-Z+#\.]{1,}\b", jd_text.lower())
-    filtered = [w for w in words if w not in COMMON_STOP_WORDS]
+    # Use the same logic as tokenize but preserve frequency
+    tokens = re.findall(r"\b[a-zA-Z][a-zA-Z0-9+#\.]*", jd_text.lower())
+    filtered = []
+    for t in tokens:
+        if t.endswith('.') and not t.endswith('.js') and not t.endswith('.net'):
+            t = t.rstrip('.')
+        if len(t) > 1 and t not in COMMON_STOP_WORDS:
+            filtered.append(t)
+            
     freq = Counter(filtered)
     return [word for word, _ in freq.most_common(top_n)]
 
