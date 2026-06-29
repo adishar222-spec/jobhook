@@ -69,6 +69,15 @@ def _scrape_worker(keyword: str, platforms: list[str], cache_key: str):
 
     if deduped:
         scraped_model.upsert_many(deduped)
+        
+        # Retrieve ObjectIds for the newly upserted courses
+        links = [c["link"] for c in deduped if c.get("link")]
+        if links:
+            found_docs = list(mongo.db.scraped_courses.find({"link": {"$in": links}}))
+            doc_map = {doc["link"]: str(doc["_id"]) for doc in found_docs}
+            for c in deduped:
+                if c.get("link") in doc_map:
+                    c["_id"] = doc_map[c["link"]]
 
     course_cache.set(cache_key, deduped)
     set_scrape_status(cache_key, "done")

@@ -43,20 +43,20 @@
         box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
     }
 
-    .job-card-top {
+    .card-top {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         gap: 0.5rem;
     }
 
-    .job-title {
+    .card-title {
         font-size: 1rem;
         font-weight: 700;
         color: var(--text-main);
     }
 
-    .job-company {
+    .card-provider {
         font-size: 0.83rem;
         color: var(--text-muted);
         font-weight: 500;
@@ -70,7 +70,15 @@
         background: var(--darker);
     }
 
-    .job-desc {
+    .course-img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        border-radius: var(--radius);
+        background: var(--darker);
+    }
+
+    .course-desc {
         font-size: 0.83rem;
         color: var(--text-muted);
         line-height: 1.55;
@@ -81,13 +89,13 @@
         flex: 1;
     }
 
-    .job-actions {
+    .card-actions {
         display: flex;
         gap: 0.5rem;
         margin-top: auto;
     }
 
-    .job-actions .btn {
+    .card-actions .btn {
         flex: 1;
         padding: 0.5rem;
         font-size: 0.83rem;
@@ -169,17 +177,17 @@
             const card = document.createElement("div");
             card.className = "course-card";
             card.innerHTML = `
-            <div class="job-card-top">
+            <div class="card-top">
                 <div>
-                    <div class="job-title">${title}</div>
-                    <div class="job-company">${provider}</div>
+                    <div class="card-title">${title}</div>
+                    <div class="card-provider">${provider}</div>
                 </div>
                 ${platformBadge(platform)}
             </div>
             <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: -0.2rem; margin-bottom: 0.3rem;">Saved on ${savedDate}</div>
-            ${thumbUrl ? `<img src="${thumbUrl}" class="job-img" alt="Thumbnail" />` : ""}
-            ${desc ? `<p class="job-desc">${desc}</p>` : ""}
-            <div class="job-actions">
+            ${thumbUrl ? `<img src="${thumbUrl}" class="course-img" alt="Thumbnail" />` : ""}
+            ${desc ? `<p class="course-desc">${desc}</p>` : ""}
+            <div class="card-actions">
                 <button class="btn btn-outline" style="border-color: var(--danger); color: var(--danger);" onclick="removeCourse('${record._id}', this)">❌ Remove</button>
                 <a href="${link}" target="_blank" rel="noopener" class="btn btn-ghost">View ↗</a>
             </div>`;
