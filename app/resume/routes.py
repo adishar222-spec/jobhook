@@ -60,23 +60,30 @@ def upload_resume():
     if user:
         current_profile = user.get("profile", {})
         
-        # Update flat fields
-        for field in ["phone", "linkedin", "github", "kaggle", "summary"]:
-            if parsed.get(field) and not current_profile.get(field):
+        # Update flat fields unconditionally with parsed data
+        for field in ["phone", "linkedin", "github", "kaggle", "summary", "location", "email", "portfolio"]:
+            if parsed.get(field):
                 current_profile[field] = parsed[field]
         
-        # Sync skills to skills_list
+        # Overwrite skills list with parsed skills
         if parsed.get("skills"):
-            existing_skill_names = {s.get("name").lower() for s in current_profile.get("skills_list", []) if s.get("name")}
-            new_skills = []
-            for s_name in parsed["skills"]:
-                if s_name.lower() not in existing_skill_names:
-                    new_skills.append({"name": s_name, "level": ""})
+            current_profile["skills_list"] = [{"name": s, "level": ""} for s in parsed["skills"]]
             
-            if new_skills:
-                current_profile["skills_list"] = current_profile.get("skills_list", []) + new_skills
+        # Overwrite array fields unconditionally with parsed data
+        for list_field in ["experience", "education", "projects", "internships", "certificates", "miscellaneous"]:
+            if parsed.get(list_field) is not None:
+                current_profile[list_field] = parsed[list_field]
         
         user_model.update_profile(user_id, current_profile)
+        
+        # Update user name if provided in parsed resume
+        if parsed.get("name"):
+            from ..extensions import mongo
+            from bson import ObjectId
+            mongo.db.users.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"name": parsed["name"]}}
+            )
 
     return jsonify({
         "message": "Resume uploaded and profile updated successfully",
