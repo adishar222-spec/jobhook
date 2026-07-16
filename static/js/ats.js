@@ -22,16 +22,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     const proposedChangesCard = document.getElementById("proposed-changes-card");
     const proposedSummary = document.getElementById("proposed-summary");
     const proposedExperience = document.getElementById("proposed-experience");
+    const proposedProjects = document.getElementById("proposed-projects");
     const proposedSkills = document.getElementById("proposed-skills");
-    const applyChangesBtn = document.getElementById("apply-changes-btn");
-    
+    const applySummaryBtn = document.getElementById("apply-summary-btn");
+    const applyExperienceBtn = document.getElementById("apply-experience-btn");
+    const applyProjectsBtn = document.getElementById("apply-projects-btn");
+    const applySkillsBtn = document.getElementById("apply-skills-btn");
+
     let currentAtsData = null;
 
     // Check if we came from job recommendations with a pending job description
     const pendingJd = sessionStorage.getItem("pending_jd");
-    if (pendingJd && jdInput) {
-        jdInput.value = pendingJd;
+    if (pendingJd) {
+        if (jdInput) jdInput.value = pendingJd;
         sessionStorage.removeItem("pending_jd");
+        sessionStorage.removeItem("ats_analysis_data"); // Clear any previous persisted analysis!
     }
 
     // Load resumes into select — FIXED: was /resume/list, now /resume/
@@ -40,11 +45,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             API.get("/resume/"),
             API.get("/auth/me")
         ]);
-        
+
         if (res && res.ok) {
             const resumes = await res.json();
             let activeResumeId = null;
-            
+
             if (userRes && userRes.ok) {
                 const userData = await userRes.json();
                 // active_resume_id might be stored as an object { $oid: "..." } if using MongoJSONProvider, or a string
@@ -66,11 +71,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                         }
                         resumeSelect.appendChild(opt);
                     });
-                    
+
                     // If no resume was marked as selected but we have resumes, the first one will be selected by default by the browser.
                 }
             }
-            
+
             // Check for persisted analysis AFTER loading resumes
             const persistedAnalysis = sessionStorage.getItem("ats_analysis_data");
             if (persistedAnalysis) {
@@ -79,7 +84,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     if (jdInput && parsed.jd) jdInput.value = parsed.jd;
                     if (resumeSelect && parsed.resumeId) resumeSelect.value = parsed.resumeId;
                     renderResults(parsed.data, false);
-                } catch(e) {}
+                } catch (e) { }
             }
         }
     } catch (e) {
@@ -201,22 +206,34 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             aiSuggestions.innerHTML = html || `<p style="color:var(--text-muted)">No specific suggestions.</p>`;
         }
-        
+
         // Proposed Changes
         if (proposedChangesCard) {
             const sugg = data.suggestions || {};
-            const missing = data.ats?.missing_keywords || [];
-            
+
+            // Only use missing skills from the skill gap analysis (skills to learn)
+            const missingSkills = data.skill_gap?.missing_skills || [];
+            const seenSkills = new Set();
+            const filteredSkills = [];
+            missingSkills.forEach(s => {
+                if (!s) return;
+                const lower = s.trim().toLowerCase();
+                if (!seenSkills.has(lower)) {
+                    seenSkills.add(lower);
+                    filteredSkills.push(s.trim());
+                }
+            });
+
             let hasChanges = false;
-            
+
             if (proposedSummary && sugg.revised_summary) {
                 proposedSummary.textContent = sugg.revised_summary;
-                proposedSummary.parentElement.style.display = "block";
+                proposedSummary.closest("div").style.display = "block";
                 hasChanges = true;
             } else if (proposedSummary) {
-                proposedSummary.parentElement.style.display = "none";
+                proposedSummary.closest("div").style.display = "none";
             }
-            
+
             if (proposedExperience && sugg.revised_experience && sugg.revised_experience.length > 0) {
                 let html = "";
                 sugg.revised_experience.forEach(ex => {
@@ -230,22 +247,39 @@ document.addEventListener("DOMContentLoaded", async () => {
                     html += `</div>`;
                 });
                 proposedExperience.innerHTML = html;
-                proposedExperience.parentElement.style.display = "block";
+                proposedExperience.closest("div").style.display = "block";
                 hasChanges = true;
             } else if (proposedExperience) {
-                proposedExperience.parentElement.style.display = "none";
+                proposedExperience.closest("div").style.display = "none";
             }
-            
+
+            if (proposedProjects && sugg.revised_projects && sugg.revised_projects.length > 0) {
+                let html = "";
+                sugg.revised_projects.forEach(prj => {
+                    html += `<div style="margin-bottom:0.75rem;"><strong>${prj.name || ''}</strong>`;
+                    if (prj.tech && prj.tech.length) {
+                        html += `<span style="color:var(--text-muted);font-size:0.8rem;"> · ${prj.tech.join(', ')}</span>`;
+                    }
+                    if (prj.description) html += `<p style="margin:0.2rem 0 0;font-size:0.82rem;">${prj.description}</p>`;
+                    html += `</div>`;
+                });
+                proposedProjects.innerHTML = html;
+                proposedProjects.closest("div").style.display = "block";
+                hasChanges = true;
+            } else if (proposedProjects) {
+                proposedProjects.closest("div").style.display = "none";
+            }
+
             if (proposedSkills) {
-                if (missing.length > 0) {
-                    proposedSkills.innerHTML = missing.map(k => `<span class="kw-tag kw-matched">${k}</span>`).join("");
+                if (filteredSkills.length > 0) {
+                    proposedSkills.innerHTML = filteredSkills.map(k => `<span class="kw-tag kw-matched">${k}</span>`).join("");
                     proposedSkills.parentElement.style.display = "block";
                     hasChanges = true;
                 } else {
                     proposedSkills.parentElement.style.display = "none";
                 }
             }
-            
+
             if (hasChanges) {
                 proposedChangesCard.style.display = "block";
                 // Show the proposed changes card when rendering results
@@ -263,40 +297,101 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Notify template to show keyword/suggestions sections
         document.dispatchEvent(new Event("ats:results"));
     }
-    
-    if (applyChangesBtn) {
-        applyChangesBtn.addEventListener("click", async () => {
-            if (!currentAtsData) return;
-            const resumeId = resumeSelect ? resumeSelect.value : "";
-            if (!resumeId) return;
-            
-            const payload = {
-                resume_id: resumeId,
-                revised_summary: currentAtsData.suggestions?.revised_summary,
-                revised_experience: currentAtsData.suggestions?.revised_experience,
-                missing_keywords: currentAtsData.ats?.missing_keywords || []
-            };
-            
-            applyChangesBtn.disabled = true;
-            applyChangesBtn.innerHTML = `<span class="spinner"></span> Applying...`;
-            
-            try {
-                const res = await API.post("/ats/apply-changes", payload);
-                if (res && res.ok) {
-                    showToast("Profile and resume updated successfully!", "success");
-                    if (proposedChangesCard) proposedChangesCard.style.display = "none";
-                    sessionStorage.removeItem("ats_analysis_data");
-                } else {
-                    const err = await res.json();
-                    showToast(err.error || "Failed to apply changes", "error");
-                }
-            } catch (e) {
-                showToast("An error occurred", "error");
-                console.error(e);
-            } finally {
-                applyChangesBtn.disabled = false;
-                applyChangesBtn.innerHTML = `✅ Apply Changes to Resume`;
+
+    // ── Shared apply helper ────────────────────────────────────────────────
+    async function applyPart(payload, btn, originalLabel) {
+        if (!currentAtsData) return;
+        const resumeId = resumeSelect ? resumeSelect.value : "";
+        if (!resumeId) { showToast("Please select a resume", "error"); return; }
+        payload.resume_id = resumeId;
+
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span> Applying...`;
+        try {
+            const res = await API.post("/ats/apply-changes", payload);
+            if (res && res.ok) {
+                showToast("Applied! Re-scoring to update dashboard...", "success");
+                // Re-run score so the dashboard ATS badge reflects the improved profile
+                await rescoreAfterApply(resumeId);
+            } else {
+                const err = await res.json();
+                showToast(err.error || "Failed to apply", "error");
             }
+        } catch (e) {
+            showToast("An error occurred", "error");
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalLabel;
+        }
+    }
+
+    async function rescoreAfterApply(resumeId) {
+        const jd = jdInput ? jdInput.value.trim() : "";
+        if (!jd || !resumeId) return;
+        try {
+            const res = await API.post("/ats/score", { job_description: jd, resume_id: resumeId });
+            if (res && res.ok) {
+                const data = await res.json();
+                currentAtsData = data;
+                // Persist & re-render so the score ring also reflects new result
+                sessionStorage.setItem("ats_analysis_data", JSON.stringify({ jd, resumeId, data }));
+                renderResults(data, false);
+                showToast("ATS score updated in dashboard!", "success");
+            }
+        } catch (e) {
+            console.warn("Re-score after apply failed:", e);
+        }
+    }
+
+    // Apply Summary
+    if (applySummaryBtn) {
+        applySummaryBtn.addEventListener("click", () => {
+            applyPart(
+                { revised_summary: currentAtsData?.suggestions?.revised_summary },
+                applySummaryBtn,
+                "✅ Apply Summary"
+            );
+        });
+    }
+
+    // Apply Experience
+    if (applyExperienceBtn) {
+        applyExperienceBtn.addEventListener("click", () => {
+            applyPart(
+                { revised_experience: currentAtsData?.suggestions?.revised_experience },
+                applyExperienceBtn,
+                "✅ Apply Experience"
+            );
+        });
+    }
+
+    // Apply Projects
+    if (applyProjectsBtn) {
+        applyProjectsBtn.addEventListener("click", () => {
+            applyPart(
+                { revised_projects: currentAtsData?.suggestions?.revised_projects },
+                applyProjectsBtn,
+                "✅ Apply Projects"
+            );
+        });
+    }
+
+    // Apply Skills
+    if (applySkillsBtn) {
+        applySkillsBtn.addEventListener("click", () => {
+            const missing = currentAtsData?.skill_gap?.missing_skills || [];
+            const seen = new Set();
+            const skills = [];
+            missing.forEach(s => {
+                const l = s.trim().toLowerCase();
+                if (!seen.has(l)) { seen.add(l); skills.push(s.trim()); }
+            });
+            applyPart(
+                { missing_keywords: skills },
+                applySkillsBtn,
+                "✅ Apply Skills to Resume"
+            );
         });
     }
 });

@@ -59,8 +59,14 @@ def _scrape_worker(role: str, platforms: list[str], cache_key: str):
 
     if deduped:
         scraped_model.upsert_many(deduped)
+        links = [j["link"] for j in deduped]
+        db_jobs = list(scraped_model.col.find({"link": {"$in": links}}))
+        for j in db_jobs:
+            j["_id"] = str(j["_id"])
+        job_cache.set(cache_key, db_jobs)
+    else:
+        job_cache.set(cache_key, deduped)
 
-    job_cache.set(cache_key, deduped)
     set_scrape_status(cache_key, "done")
     logger.info(f"[scrape_worker] Finished — {len(deduped)} unique jobs for key='{cache_key}'")
 

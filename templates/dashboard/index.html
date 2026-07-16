@@ -12,7 +12,6 @@
         <h1>Welcome back, <span id="user-greeting">there</span> 👋</h1>
         <p>Here's your career progress at a glance.</p>
     </div>
-    <button id="top-ats-btn" onclick="showUploadForm()" class="btn btn-primary">📊 ATS Score: —</button>
 </div>
 
 
@@ -301,37 +300,6 @@
         } catch (e) { console.error("Resume management error", e); }
     }
 
-    function updateTopAtsScore() {
-        const topBtn = document.getElementById("top-ats-btn");
-        if (!topBtn || !window._currentResumes || !window._currentResumes.length || !userProfile) return;
-
-        let activeId = userProfile.active_resume_id;
-        if (activeId && typeof activeId === 'object' && activeId.$oid) activeId = activeId.$oid;
-
-        let activeRes = window._currentResumes.find(r => String(r._id) === String(activeId));
-        if (!activeRes) activeRes = window._currentResumes[0];
-
-        if (activeRes && activeRes.ats_scores && activeRes.ats_scores.length > 0) {
-            const scores = activeRes.ats_scores;
-            const avg = scores.reduce((sum, item) => sum + item.score, 0) / scores.length;
-            const atsText = Math.round(avg) + "%";
-            topBtn.innerHTML = `📊 ATS Score: ${atsText}`;
-            topBtn.onclick = null;
-            topBtn.style.cursor = "default";
-
-            const val = parseInt(atsText);
-            if (val >= 70) {
-                topBtn.className = "btn btn-primary";
-                topBtn.style.color = "white";
-            } else if (val >= 40) {
-                topBtn.className = "btn btn-outline";
-                topBtn.style.color = "var(--text-main)";
-            } else {
-                topBtn.className = "btn btn-danger";
-                topBtn.style.color = "white";
-            }
-        }
-    }
 
     // Stored parsed data for download
     let _currentParsed = null;

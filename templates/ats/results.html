@@ -55,23 +55,19 @@
 
             <!-- Keywords (shown after scoring) -->
             <div id="keywords-section" style="display:none;">
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; align-items: stretch;">
-                    
+                <div
+                    style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; align-items: stretch;">
+
                     <div class="card" style="margin:0; height:100%;">
                         <h4 style="color:var(--success);margin-bottom:0.75rem;">✅ Matched Keywords</h4>
                         <div id="matched-keywords"></div>
                     </div>
 
                     <div class="card" style="margin:0; height:100%;">
-                        <h4 style="color:var(--danger);margin-bottom:0.75rem;">❌ Missing Keywords</h4>
-                        <div id="missing-keywords"></div>
-                    </div>
-
-                    <div class="card" style="margin:0; height:100%;">
                         <h4 style="margin-bottom:0.75rem;">🛠 Skill Gap Analysis</h4>
                         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Skills you have:</p>
                         <div id="skill-gap-matched" style="margin-bottom:0.75rem;"></div>
-                        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Skills to learn:</p>
+                        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">Skills to add:</p>
                         <div id="skill-gap-missing"></div>
                     </div>
 
@@ -80,27 +76,50 @@
                         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
                             These updates can be applied directly to your resume and profile to improve your ATS score.
                         </p>
-                        
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
                             <div>
                                 <h5 style="margin-bottom:0.25rem;font-size:0.9rem;">Revised Summary</h5>
-                                <div id="proposed-summary" style="font-size:0.85rem; padding:0.5rem; background:var(--surface-alt); border-radius:4px; border: 1px solid var(--border); height:100%;"></div>
+                                <div id="proposed-summary"
+                                    style="font-size:0.85rem; padding:0.5rem; background:var(--surface-alt); border-radius:4px; border: 1px solid var(--border); min-height:60px; margin-bottom:0.5rem;">
+                                </div>
+                                <button id="apply-summary-btn" class="btn btn-primary"
+                                    style="width:100%;font-size:0.85rem;">
+                                    ✅ Apply Summary
+                                </button>
                             </div>
-                            
+
                             <div>
                                 <h5 style="margin-bottom:0.25rem;font-size:0.9rem;">Revised Experience</h5>
-                                <div id="proposed-experience" style="font-size:0.85rem; padding:0.5rem; background:var(--surface-alt); border-radius:4px; border: 1px solid var(--border); max-height:250px; overflow-y:auto; height:100%;"></div>
+                                <div id="proposed-experience"
+                                    style="font-size:0.85rem; padding:0.5rem; background:var(--surface-alt); border-radius:4px; border: 1px solid var(--border); max-height:250px; overflow-y:auto; min-height:60px; margin-bottom:0.5rem;">
+                                </div>
+                                <button id="apply-experience-btn" class="btn btn-primary"
+                                    style="width:100%;font-size:0.85rem;">
+                                    ✅ Apply Experience
+                                </button>
+                            </div>
+
+                            <div>
+                                <h5 style="margin-bottom:0.25rem;font-size:0.9rem;">Enhanced Projects</h5>
+                                <div id="proposed-projects"
+                                    style="font-size:0.85rem; padding:0.5rem; background:var(--surface-alt); border-radius:4px; border: 1px solid var(--border); max-height:250px; overflow-y:auto; min-height:60px; margin-bottom:0.5rem;">
+                                </div>
+                                <button id="apply-projects-btn" class="btn btn-primary"
+                                    style="width:100%;font-size:0.85rem;">
+                                    ✅ Apply Projects
+                                </button>
                             </div>
                         </div>
 
-                        <div style="margin-top:1.5rem; margin-bottom:1.5rem;">
+                        <div style="margin-top:1.5rem; margin-bottom:0.5rem;">
                             <h5 style="margin-bottom:0.25rem;font-size:0.9rem;">Skills to Add</h5>
-                            <div id="proposed-skills"></div>
+                            <div id="proposed-skills" style="margin-bottom:0.75rem;"></div>
+                            <button id="apply-skills-btn" class="btn btn-primary" style="width:100%;font-size:0.85rem;">
+                                ✅ Apply Skills to Resume
+                            </button>
                         </div>
-                        
-                        <button id="apply-changes-btn" class="btn btn-primary" style="width:100%;">
-                            ✅ Apply Changes to Resume
-                        </button>
                     </div>
 
                     <div class="card" style="margin:0; grid-column: 1 / -1;">
@@ -117,12 +136,12 @@
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/ats.js') }}"></script>
 <script>
-// Show keywords section when results come in
-const origRenderResults = window.__atsRenderResults;
-document.addEventListener("ats:results", () => {
-    document.getElementById("results-placeholder").style.display = "none";
-    document.getElementById("results-container").style.display = "block";
-    document.getElementById("keywords-section").style.display = "block";
-});
+    // Show keywords section when results come in
+    const origRenderResults = window.__atsRenderResults;
+    document.addEventListener("ats:results", () => {
+        document.getElementById("results-placeholder").style.display = "none";
+        document.getElementById("results-container").style.display = "block";
+        document.getElementById("keywords-section").style.display = "block";
+    });
 </script>
 {% endblock %}

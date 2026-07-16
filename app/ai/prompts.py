@@ -51,7 +51,8 @@ Return a structured JSON:
   "keyword_suggestions": [],
   "language_upgrades": [],
   "revised_summary": "",
-  "revised_experience": [{{"company": "", "title": "", "location": "", "start": "", "end": "", "bullets": []}}]
+  "revised_experience": [{{"company": "", "title": "", "location": "", "start": "", "end": "", "bullets": []}}],
+  "revised_projects": [{{"name": "", "description": "Enhanced project description that highlights impact and incorporates missing keywords.", "tech": []}}]
 }}
 """
 

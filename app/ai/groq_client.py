@@ -48,9 +48,12 @@ class GroqClient:
 
     def get_resume_suggestions(self, resume_text: str, jd_text: str,
                                 missing_keywords: list, score: int = 0,
-                                parsed_experience: list = None) -> dict:
+                                parsed_experience: list = None,
+                                parsed_projects: list = None) -> dict:
         if parsed_experience is None:
             parsed_experience = []
+        if parsed_projects is None:
+            parsed_projects = []
             
         prompt = RESUME_SUGGESTIONS_PROMPT.format(
             resume_text=resume_text[:3000],
@@ -69,7 +72,8 @@ class GroqClient:
                 "keyword_suggestions": [], 
                 "language_upgrades": [],
                 "revised_summary": "",
-                "revised_experience": []
+                "revised_experience": [],
+                "revised_projects": []
             }
 
     def generate_cover_letter(self, name: str, role: str, company: str,

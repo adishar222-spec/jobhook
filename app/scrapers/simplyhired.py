@@ -133,29 +133,42 @@ def parse(role: str, driver) -> list[dict]:
             if len(jobs) >= LIMIT:
                 break
             try:
-                # Click card to reveal description panel
-                card.click()
-                time.sleep(1.2)
-
                 title = _safe_text(card, By.CSS_SELECTOR, "[data-testid='searchSerpJobTitle']")
                 company = _safe_text(card, By.CSS_SELECTOR, "[data-testid='companyName']")
                 location = _safe_text(card, By.CSS_SELECTOR, "[data-testid='searchSerpJobLocation']")
                 salary_raw = _safe_text(card, By.CSS_SELECTOR, "[data-testid='searchSerpJobSalaryConfirmed']")
 
+                link_el = None
                 try:
                     link_el = card.find_element(By.CSS_SELECTOR, "a[data-testid='searchSerpJobTitleLink']")
                     link = link_el.get_attribute("href") or ""
                 except NoSuchElementException:
                     try:
-                        link_el = card.find_element(By.CSS_SELECTOR, "[data-testid='searchSerpJobTitle']")
-                        link = link_el.get_attribute("href")
+                        title_wrap = card.find_element(By.CSS_SELECTOR, "[data-testid='searchSerpJobTitle']")
+                        link = title_wrap.get_attribute("href")
                         if not link:
-                            link = link_el.find_element(By.TAG_NAME, "a").get_attribute("href") or ""
+                            link_el = title_wrap.find_element(By.TAG_NAME, "a")
+                            link = link_el.get_attribute("href") or ""
+                        else:
+                            link_el = title_wrap
                     except NoSuchElementException:
                         link = ""
 
                 if not title or link in seen_links:
                     continue
+
+                # Click link to reveal description panel
+                try:
+                    if link_el:
+                        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link_el)
+                        time.sleep(0.3)
+                        link_el.click()
+                    else:
+                        card.click()
+                except Exception:
+                    card.click()
+                    
+                time.sleep(1.5)
 
                 # Get full description from the right side panel
                 description = ""

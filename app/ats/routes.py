@@ -31,22 +31,33 @@ def score():
     # ATS Score
     ats_result = calculate_ats_score(resume["raw_text"], jd_text)
 
-    # Skill Gap
+    # Skill Gap — prefer user profile skills_list over resume parsed skills
     target_skills = data.get("target_skills", [])
-    resume_skills = resume.get("parsed", {}).get("skills", [])
-    gap_result = analyze_skill_gap(resume_skills, jd_text, target_skills)
+    user_doc = user_model.find_by_id(user_id)
+    profile_skills = []
+    if user_doc:
+        profile = user_doc.get("profile", {})
+        skills_list = profile.get("skills_list", [])
+        if skills_list:
+            profile_skills = [s.get("name", "") for s in skills_list if s.get("name")]
+        elif profile.get("skills"):
+            profile_skills = profile.get("skills", [])
+    if not profile_skills:
+        profile_skills = resume.get("parsed", {}).get("skills", [])
+
+    gap_result = analyze_skill_gap(profile_skills, jd_text, target_skills)
 
     # AI improvement suggestions
     parsed_exp = resume.get("parsed", {}).get("experience", [])
+    parsed_prj = resume.get("parsed", {}).get("projects", [])
     suggestions = groq.get_resume_suggestions(
         resume_text=resume["raw_text"],
         jd_text=jd_text,
         missing_keywords=ats_result["missing_keywords"],
         score=ats_result["score"],
-        parsed_experience=parsed_exp
+        parsed_experience=parsed_exp,
+        parsed_projects=parsed_prj
     )
-
-
 
     # Save ATS history to resume
     resume_model.add_ats_score(resume_id, {
@@ -70,9 +81,9 @@ def apply_changes():
     data = request.get_json()
 
     resume_id = data.get("resume_id")
-    revised_summary = data.get("revised_summary")
-    revised_experience = data.get("revised_experience")
-    missing_keywords = data.get("missing_keywords", [])
+    revised_summary = data.get("revised_summary")        # omitted = don't touch
+    revised_experience = data.get("revised_experience")  # omitted = don't touch
+    missing_keywords = data.get("missing_keywords")      # omitted = don't touch
 
     if not resume_id:
         return jsonify({"error": "resume_id is required"}), 400
@@ -86,28 +97,50 @@ def apply_changes():
         return jsonify({"error": "User profile not found"}), 404
 
     profile = user_doc["profile"]
+    resume_set = {}
 
-    if revised_summary:
+    # Only update summary if explicitly supplied
+    if revised_summary is not None:
         profile["summary"] = revised_summary
+        resume_set["parsed.summary"] = revised_summary
 
-    if revised_experience and isinstance(revised_experience, list):
+    # Only update experience if explicitly supplied
+    if revised_experience is not None and isinstance(revised_experience, list):
         profile["experience"] = revised_experience
+        resume_set["parsed.experience"] = revised_experience
 
-    current_skills = profile.get("skills", [])
-    for kw in missing_keywords:
-        if kw not in current_skills:
-            current_skills.append(kw)
-    profile["skills"] = current_skills
+    # Only update projects if explicitly supplied
+    revised_projects = data.get("revised_projects")  # omitted = don't touch
+    if revised_projects is not None and isinstance(revised_projects, list):
+        profile["projects"] = revised_projects
+        resume_set["parsed.projects"] = revised_projects
+
+    # Only update skills if explicitly supplied
+    if missing_keywords is not None:
+        # Sync into both flat skills list and structured skills_list
+        existing_skills = [s.lower() for s in profile.get("skills", [])]
+        existing_skills_list_names = [s.get("name", "").lower() for s in profile.get("skills_list", [])]
+
+        new_skills = profile.get("skills", [])
+        new_skills_list = profile.get("skills_list", [])
+
+        for kw in missing_keywords:
+            if kw.lower() not in existing_skills:
+                new_skills.append(kw)
+            if kw.lower() not in existing_skills_list_names:
+                new_skills_list.append({"name": kw, "level": ""})
+
+        profile["skills"] = new_skills
+        profile["skills_list"] = new_skills_list
+        resume_set["parsed.skills"] = new_skills
+        resume_set["parsed.skills_list"] = new_skills_list
 
     user_model.update_profile(user_id, profile)
 
-    resume_model.collection.update_one(
-        {"_id": resume["_id"]},
-        {"$set": {
-            "parsed.summary": profile.get("summary", ""),
-            "parsed.experience": profile.get("experience", []),
-            "parsed.skills": profile.get("skills", [])
-        }}
-    )
+    if resume_set:
+        resume_model.collection.update_one(
+            {"_id": resume["_id"]},
+            {"$set": resume_set}
+        )
 
     return jsonify({"message": "Changes applied successfully"}), 200
