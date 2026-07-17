@@ -137,19 +137,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentAtsData = data;
         if (resultsContainer) resultsContainer.style.display = "block";
 
-        const score = data.ats?.score ?? 0;
+        const matchPct = data.skill_gap?.match_percentage ?? null;
+
+        if (scoreValue) {
+            scoreValue.textContent = matchPct !== null ? `${matchPct}%` : "—";
+        }
+
         if (scoreRing) {
-            scoreRing.style.setProperty("--pct", score);
-            // Color based on score
-            const color = score >= 80 ? "var(--success)" : score >= 60 ? "var(--warning)" : "var(--danger)";
-            scoreRing.style.background = `conic-gradient(${color} calc(${score} * 3.6deg), rgba(255,255,255,0.1) 0deg)`;
+            scoreRing.style.background = ""; // Clear any previous inline overrides
+            scoreRing.style.setProperty("--pct", matchPct ?? 0);
+            const color = matchPct >= 70 ? "var(--success)" : matchPct >= 40 ? "var(--warning)" : "var(--danger)";
+            scoreRing.style.setProperty("--primary", color);
         }
-        if (scoreValue) scoreValue.textContent = `${score}%`;
-        if (ratingLabel) {
-            ratingLabel.textContent = data.ats?.rating ?? "—";
-            const ratingColor = score >= 80 ? "var(--success)" : score >= 60 ? "var(--warning)" : "var(--danger)";
-            ratingLabel.style.color = ratingColor;
-        }
+        // hide the now-redundant pill badge
+        const skillMatchBadge = document.getElementById("skill-match-badge");
+        if (skillMatchBadge) skillMatchBadge.style.display = "none";
 
         // Matched keywords
         if (matchedKeywords) {

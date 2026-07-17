@@ -97,6 +97,10 @@
                     <label>LinkedIn</label>
                     <div id="profile-linkedin-val" class="profile-value">—</div>
                 </div>
+                <div class="profile-info-group">
+                    <label>Profile Email</label>
+                    <div id="profile-email-val" class="profile-value">—</div>
+                </div>
                 <div class="profile-info-group" style="grid-column: 1 / -1;">
                     <label>Summary</label>
                     <div id="profile-summary-val" class="profile-value" style="white-space: pre-wrap;">—</div>
@@ -185,6 +189,10 @@
                     <div class="auth-form-group" style="margin-bottom: 0.75rem;">
                         <label for="edit-linkedin">LinkedIn URL</label>
                         <input type="url" id="edit-linkedin" placeholder="https://linkedin.com/in/..." />
+                    </div>
+                    <div class="auth-form-group" style="margin-bottom: 0.75rem;">
+                        <label for="edit-email">Profile Email (for Resumes)</label>
+                        <input type="email" id="edit-email" placeholder="example@email.com" />
                     </div>
                     <div class="auth-form-group" style="grid-column: 1 / -1; margin-bottom: 0.75rem;">
                         <label for="edit-summary">Summary</label>
@@ -523,6 +531,7 @@
             document.getElementById("profile-phone-val").textContent = profile.phone || "—";
             document.getElementById("profile-linkedin-val").innerHTML = profile.linkedin
                 ? `<a href="${profile.linkedin}" target="_blank">View LinkedIn</a>` : "—";
+            document.getElementById("profile-email-val").textContent = profile.email || "—";
             document.getElementById("profile-skills-list").innerHTML = (profile.skills_list || []).length > 0
                 ? (profile.skills_list || []).map(s => `<div class="profile-list-item"><strong>${s.name}</strong><span>${s.level || ""}</span></div>`).join("")
                 : `<span style="color:var(--text-muted);font-size:0.85rem;">No skills added.</span>`;
@@ -549,6 +558,7 @@
             document.getElementById("edit-location").value = profile.location || "";
             document.getElementById("edit-phone").value = profile.phone || "";
             document.getElementById("edit-linkedin").value = profile.linkedin || "";
+            document.getElementById("edit-email").value = profile.email || "";
             document.getElementById("edit-summary").value = profile.summary || "";
 
             // Sync current profile data to preview section
@@ -616,6 +626,7 @@
         const location = document.getElementById("edit-location").value.trim();
         const phone = document.getElementById("edit-phone").value.trim();
         const linkedin = document.getElementById("edit-linkedin").value.trim();
+        const email = document.getElementById("edit-email").value.trim();
         const summary = document.getElementById("edit-summary").value.trim();
 
         try {
@@ -630,7 +641,7 @@
                     name,
                     profile: {
                         ...(userProfile ? userProfile.profile : {}),
-                        target_role, location, phone, linkedin, summary
+                        target_role, location, phone, linkedin, summary, email
                     }
                 })
             });
